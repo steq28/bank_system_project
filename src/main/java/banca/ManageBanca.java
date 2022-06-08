@@ -22,7 +22,7 @@ import org.springframework.web.client.HttpClientErrorException.NotFound;
 import org.springframework.ui.Model;
 
 @RestController
-public class ManageCorsi {
+public class ManageBanca {
 
 	public Map<String, String> parseBody(String str) {
 		Map<String, String> body = new HashMap<>();
@@ -38,7 +38,7 @@ public class ManageCorsi {
 
 	@RequestMapping(value = "/api/account", method = RequestMethod.GET)
 	public List<Account> getAccount() {
-		return EsrestApplication.accounts;
+		return Banca.accounts;
 	}
 
 	@RequestMapping(value = "/api/account", method = RequestMethod.POST)
@@ -47,14 +47,14 @@ public class ManageCorsi {
 
 		Account ac = new Account(body.get("name"), body.get("surname"));
 
-		EsrestApplication.accounts.add(ac);
+		Banca.accounts.add(ac);
 	}
 
 	@RequestMapping(value = "/api/account/{accountId}", method = RequestMethod.DELETE)
 	public String removeEsame(@PathVariable String accountId) {
 		Account removeThis = null;
 
-		for (Account ac : EsrestApplication.accounts) {
+		for (Account ac : Banca.accounts) {
 			if (ac.getAccountId().equals(accountId)) {
 				removeThis = ac;
 				break;
@@ -62,7 +62,7 @@ public class ManageCorsi {
 		}
 
 		if (removeThis != null) {
-			if (EsrestApplication.accounts.remove(removeThis))
+			if (Banca.accounts.remove(removeThis))
 				return "OK!";
 			else
 				return "Failed!";
