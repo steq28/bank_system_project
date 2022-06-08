@@ -1,5 +1,6 @@
 package banca;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,6 +68,14 @@ public class ManageBanca {
 		Map<String, String> body = parseBody(nome);
 
 		Account ac = new Account(body.get("name"), body.get("surname"), uniqueID);
+
+		Transazione t1 = new Transazione(new Date(), 5.0, "hfshfshshshsrf");
+		Transazione t2 = new Transazione(new Date(509658), 50, "davhrh");
+		Transazione t3 = new Transazione(new Date(508), 4, "oqrjqwo");
+
+		ac.addTransazione(t1);
+		ac.addTransazione(t2);
+		ac.addTransazione(t3);
 
 		Banca.accounts.add(ac);
 	}

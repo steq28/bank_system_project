@@ -1,5 +1,7 @@
 package banca;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Account {
@@ -15,6 +17,7 @@ public class Account {
 		this.surname = surname;
 		this.accountId = accountId;
 		this.saldo = 0.0;
+		this.transazioni = new ArrayList<Transazione>();
 	}
 
 	public String getName() {
@@ -47,6 +50,7 @@ public class Account {
 
 	public void addTransazione(Transazione t) {
 		transazioni.add(t);
+		transazioni.sort((t1, t2) -> t2.getData().compareTo(t1.getData()));
 	}
 
 	public List<Transazione> getTransazioni() {
