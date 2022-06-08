@@ -3,6 +3,7 @@ package banca;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.websocket.server.PathParam;
 
@@ -19,7 +20,22 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException.NotFound;
+
 import org.springframework.ui.Model;
+
+class Proprietario {
+	public String nome;
+	public String cognome;
+	public Double saldo;
+	public List<Transazione> transazioni;
+
+	public Proprietario(String nome, String cognome, Double saldo, List<Transazione> transazioni) {
+		this.nome = nome;
+		this.cognome = cognome;
+		this.saldo = saldo;
+		this.transazioni = transazioni;
+	}
+}
 
 @RestController
 public class ManageBanca {
@@ -36,16 +52,21 @@ public class ManageBanca {
 		return body;
 	}
 
+	// Endpoint GET "/api/account"
 	@RequestMapping(value = "/api/account", method = RequestMethod.GET)
 	public List<Account> getAccount() {
 		return Banca.accounts;
 	}
 
+	// Endpoint POST "/api/account"
 	@RequestMapping(value = "/api/account", method = RequestMethod.POST)
 	public void createAccount(@RequestBody String nome) {
+
+		String uniqueID = UUID.randomUUID().toString(); // se escono uguali faccio la rinuncia agli studi
+
 		Map<String, String> body = parseBody(nome);
 
-		Account ac = new Account(body.get("name"), body.get("surname"));
+		Account ac = new Account(body.get("name"), body.get("surname"), uniqueID);
 
 		Banca.accounts.add(ac);
 	}
@@ -68,6 +89,29 @@ public class ManageBanca {
 				return "Failed!";
 		} else
 			return "Failed";
+	}
+
+	// Endpoint GET "/api/account/{accountId}"
+	@RequestMapping(value = "/api/account/{accountId}", method = RequestMethod.GET)
+	public Proprietario getAccountDetails(@PathVariable String accountId) {
+		Account accountTrovato = null;
+		for (Account ac : Banca.accounts) {
+			if (ac.getAccountId().equals(accountId)) {
+				accountTrovato = ac;
+				break;
+			}
+		}
+
+		if (accountTrovato != null) {
+			Proprietario proprietario = new Proprietario(accountTrovato.getName(), accountTrovato.getSurname(),
+					accountTrovato.getSaldo(), accountTrovato.getTransazioni());
+
+			return proprietario;
+
+		} else {
+			// TODO: ritorna un errore di "account non trovato"
+			return null;
+		}
 	}
 
 	// @GetMapping("/manualInput")
