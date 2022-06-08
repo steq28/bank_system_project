@@ -1,4 +1,4 @@
-# Sitema Bancario
+# Sistema Bancario
 
 Michele Banfi 869294  
 Stefano Quaggio 866504
