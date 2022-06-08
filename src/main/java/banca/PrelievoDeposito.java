@@ -10,4 +10,17 @@ public class PrelievoDeposito {
         this.saldo = saldo;
         this.uuidV4 = UUID.randomUUID().toString();
     }
+
+	public double getSaldo() {
+		return saldo;
+	}
+
+	public void setSaldo(double saldo) {
+		this.saldo = saldo;
+	}
+
+	public String getUuidV4() {
+		return uuidV4;
+	}
+    
 }

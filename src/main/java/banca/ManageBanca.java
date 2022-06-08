@@ -104,7 +104,8 @@ public class ManageBanca {
 
 	// Endpoint POST "/api/account/{accountId}" for Prelevare/Depositare
 	@RequestMapping(value = "/api/account/{accountId}", method = RequestMethod.POST)
-	public ResponseEntity prelevaDeposita(@PathVariable String accountId, @RequestBody String bodyRaw) {
+	public ResponseEntity<PrelievoDeposito> prelevaDeposita(@PathVariable String accountId,
+			@RequestBody String bodyRaw) {
 
 		Map<String, String> body = parseBody(bodyRaw);
 
@@ -121,14 +122,14 @@ public class ManageBanca {
 			double saldo = accountTrovato.getSaldo();
 			if (amount < 0 && saldo < amount) {
 				// if the value is -1 its an error
-				return new ResponseEntity<PrelievoDeposito>(new PrelievoDeposito(-1), HttpStatus.NOT_ACCEPTABLE);
+				return new ResponseEntity<PrelievoDeposito>(new PrelievoDeposito(-1.0), HttpStatus.NOT_ACCEPTABLE);
 			} else {
 				saldo += amount;
 				accountTrovato.setSaldo(saldo);
 				return new ResponseEntity<PrelievoDeposito>(new PrelievoDeposito(saldo), HttpStatus.OK);
 			}
 		} else {
-			return new ResponseEntity<PrelievoDeposito>(new PrelievoDeposito(-1), HttpStatus.NOT_ACCEPTABLE);
+			return new ResponseEntity<PrelievoDeposito>(new PrelievoDeposito(-1.0), HttpStatus.NOT_ACCEPTABLE);
 		}
 	}
 
@@ -227,6 +228,7 @@ public class ManageBanca {
 				break;
 			}
 		}
+
 		Account account2 = null;
 		for (Account ac : Banca.accounts) {
 			if (ac.getAccountId().equals(to)) {
@@ -234,10 +236,11 @@ public class ManageBanca {
 				break;
 			}
 		}
+
 		if (accountTrovato != null) {
 			double saldo = accountTrovato.getSaldo();
 			double saldo2 = account2.getSaldo();
-			if (amount < 0 && saldo < amount) {
+			if (amount < 0 || saldo < amount) {
 				// if the value is -1 its an error
 				return new ResponseEntity<String>("-1", HttpStatus.NOT_ACCEPTABLE);
 			} else if (amount > 0) {
@@ -247,8 +250,10 @@ public class ManageBanca {
 
 				accountTrovato.addTransazione(t);
 				account2.addTransazione(t);
+				Banca.transazioniTotali.add(t);
 
-				saldo += amount;
+				saldo -= amount;
+				saldo2 += amount;
 				accountTrovato.setSaldo(saldo);
 				account2.setSaldo(saldo2);
 				return new ResponseEntity<PrelievoDeposito>(new PrelievoDeposito(saldo), HttpStatus.OK);
@@ -295,8 +300,13 @@ public class ManageBanca {
 				Transazione nuovaTransazione = new Transazione(new Date(System.currentTimeMillis()),
 						transazioneCanc.getImporto(), transazioneCanc.getToId(), transazioneCanc.getFromId());
 				if (Banca.transazioniTotali.add(nuovaTransazione)) {
-					mittente.setSaldo(-transazioneCanc.getImporto());
-					beneficiario.setSaldo(transazioneCanc.getImporto());
+					mittente.setSaldo(mittente.getSaldo() - transazioneCanc.getImporto());
+					beneficiario.setSaldo(beneficiario.getSaldo() + transazioneCanc.getImporto());
+
+					mittente.addTransazione(nuovaTransazione);
+					beneficiario.addTransazione(nuovaTransazione);
+					Banca.transazioniTotali.add(nuovaTransazione);
+
 					return new ResponseEntity<String>("Transazione annullata correttamente!", HttpStatus.OK);
 				} else
 					return new ResponseEntity<String>("Inserimento non riuscito!",
