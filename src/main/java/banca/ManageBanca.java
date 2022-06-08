@@ -24,20 +24,6 @@ import org.springframework.web.client.HttpClientErrorException.NotFound;
 
 import org.springframework.ui.Model;
 
-class Proprietario {
-	public String nome;
-	public String cognome;
-	public Double saldo;
-	public List<Transazione> transazioni;
-
-	public Proprietario(String nome, String cognome, Double saldo, List<Transazione> transazioni) {
-		this.nome = nome;
-		this.cognome = cognome;
-		this.saldo = saldo;
-		this.transazioni = transazioni;
-	}
-}
-
 @RestController
 public class ManageBanca {
 
@@ -61,27 +47,19 @@ public class ManageBanca {
 
 	// Endpoint POST "/api/account"
 	@RequestMapping(value = "/api/account", method = RequestMethod.POST)
-	public void createAccount(@RequestBody String nome) {
+	public void createAccount(@RequestBody String bodyRaw) {
 
 		String uniqueID = UUID.randomUUID().toString(); // se escono uguali faccio la rinuncia agli studi
 
-		Map<String, String> body = parseBody(nome);
+		Map<String, String> body = parseBody(bodyRaw);
 
 		Account ac = new Account(body.get("name"), body.get("surname"), uniqueID);
-
-		Transazione t1 = new Transazione(new Date(), 5.0, "hfshfshshshsrf");
-		Transazione t2 = new Transazione(new Date(509658), 50, "davhrh");
-		Transazione t3 = new Transazione(new Date(508), 4, "oqrjqwo");
-
-		ac.addTransazione(t1);
-		ac.addTransazione(t2);
-		ac.addTransazione(t3);
 
 		Banca.accounts.add(ac);
 	}
 
-	@RequestMapping(value = "/api/account/{accountId}", method = RequestMethod.DELETE)
-	public String removeEsame(@PathVariable String accountId) {
+	@RequestMapping(value = "/api/account", method = RequestMethod.DELETE)
+	public ResponseEntity removeAccount(@RequestParam("id") String accountId) {
 		Account removeThis = null;
 
 		for (Account ac : Banca.accounts) {
@@ -93,16 +71,16 @@ public class ManageBanca {
 
 		if (removeThis != null) {
 			if (Banca.accounts.remove(removeThis))
-				return "OK!";
+				return new ResponseEntity<String>("OK", HttpStatus.OK);
 			else
-				return "Failed!";
+				return new ResponseEntity<String>("Failed to remove", HttpStatus.BAD_REQUEST);
 		} else
-			return "Failed";
+			return new ResponseEntity<String>("Account not found!", HttpStatus.NOT_FOUND);
 	}
 
 	// Endpoint GET "/api/account/{accountId}"
 	@RequestMapping(value = "/api/account/{accountId}", method = RequestMethod.GET)
-	public Proprietario getAccountDetails(@PathVariable String accountId) {
+	public ResponseEntity<Proprietario> getAccountDetails(@PathVariable String accountId) {
 		Account accountTrovato = null;
 		for (Account ac : Banca.accounts) {
 			if (ac.getAccountId().equals(accountId)) {
@@ -115,202 +93,221 @@ public class ManageBanca {
 			Proprietario proprietario = new Proprietario(accountTrovato.getName(), accountTrovato.getSurname(),
 					accountTrovato.getSaldo(), accountTrovato.getTransazioni());
 
-			return proprietario;
+			// return proprietario;
+			return new ResponseEntity<Proprietario>(proprietario, HttpStatus.OK);
 
 		} else {
 			// TODO: ritorna un errore di "account non trovato"
-			return null;
+			return new ResponseEntity<Proprietario>(new Proprietario("", "", -1.0, null), HttpStatus.BAD_REQUEST);
 		}
 	}
 
-	// @GetMapping("/manualInput")
-	// public String greeting(@RequestParam(name = "name", required = false,
-	// defaultValue = "api") String name,
-	// Model model) {
-	// model.addAttribute("name", name);
-	// return "manualInput";
-	// }
+	// Endpoint POST "/api/account/{accountId}" for Prelevare/Depositare
+	@RequestMapping(value = "/api/account/{accountId}", method = RequestMethod.POST)
+	public ResponseEntity prelevaDeposita(@PathVariable String accountId, @RequestBody String bodyRaw) {
 
-	// @RequestMapping("/api/")
-	// public List<Universita> Saluta() {
-	// return EsrestApplication.universita;
-	// }
+		Map<String, String> body = parseBody(bodyRaw);
 
-	// @RequestMapping("/api/{IDuniversita}/{IDcorsoDiLaurea}/{esame}/")
-	// public Esame getEsame(@PathVariable String IDuniversita, @PathVariable String
-	// IDcorsoDiLaurea,
+		double amount = Double.parseDouble((body.get("amount")));
 
-	// @PathVariable String esame) {
-	// Universita u = null;
-	// for (Universita un : EsrestApplication.universita) {
-	// if (un.NomeUniversita.equals(IDuniversita)) {
-	// u = un;
-	// break;
-	// }
-	// }
+		Account accountTrovato = null;
+		for (Account ac : Banca.accounts) {
+			if (ac.getAccountId().equals(accountId)) {
+				accountTrovato = ac;
+				break;
+			}
+		}
+		if (accountTrovato != null) {
+			double saldo = accountTrovato.getSaldo();
+			if (amount < 0 && saldo < amount) {
+				// if the value is -1 its an error
+				return new ResponseEntity<PrelievoDeposito>(new PrelievoDeposito(-1), HttpStatus.NOT_ACCEPTABLE);
+			} else {
+				saldo += amount;
+				accountTrovato.setSaldo(saldo);
+				return new ResponseEntity<PrelievoDeposito>(new PrelievoDeposito(saldo), HttpStatus.OK);
+			}
+		} else {
+			return new ResponseEntity<PrelievoDeposito>(new PrelievoDeposito(-1), HttpStatus.NOT_ACCEPTABLE);
+		}
+	}
 
-	// Corso c = null;
-	// for (Corso co : u.corsi) {
-	// if (co.CorsoDiLaurea.equals(IDcorsoDiLaurea)) {
-	// c = co;
-	// break;
-	// }
-	// }
-	// Esame e = null;
-	// if (c != null) {
-	// for (Esame ee : c.esami) {
-	// if (ee.nome.equals(esame)) {
-	// e = ee;
-	// break;
-	// }
-	// }
-	// } else {
-	// throw new NotFoundException();
-	// }
-	// if (e != null) {
-	// return e;
-	// } else {
-	// throw new NotFoundException();
-	// }
-	// }
+	// Endpoint PUT "/api/account/{accountId}"
+	@RequestMapping(value = "/api/account/{accountId}", method = RequestMethod.PUT)
+	public ResponseEntity<String> editAccount(@PathVariable String accountId, @RequestBody String bodyRaw) {
+		Map<String, String> body = parseBody(bodyRaw);
+		Account accountTrovato = null;
 
-	// @RequestMapping(value = "/api/{IDuniversita}/{IDcorsoDiLaurea}/", method =
-	// RequestMethod.POST)
-	// public ResponseEntity<String> addEsame(@PathVariable String IDuniversita,
-	// @PathVariable String IDcorsoDiLaurea,
+		for (Account ac : Banca.accounts) {
+			if (ac.getAccountId().equals(accountId)) {
+				accountTrovato = ac;
+				break;
+			}
+		}
 
-	// @RequestBody String nome) {
-	// Map<String, String> body = parseBody(nome);
+		if (accountTrovato != null && body.containsKey("name") && body.containsKey("surname")) {
+			accountTrovato.setName(body.get("name"));
+			accountTrovato.setSurname(body.get("surname"));
+			return new ResponseEntity<String>("OK!", HttpStatus.OK);
+		} else {
+			return new ResponseEntity<String>("Fail!", HttpStatus.BAD_REQUEST);
+		}
+	}
 
-	// Universita u = null;
-	// for (Universita un : EsrestApplication.universita) {
-	// if (un.NomeUniversita.equals(IDuniversita)) {
-	// u = un;
-	// break;
-	// }
-	// }
+	// Endpoint PATCH "/api/account/{accountId}"
+	@RequestMapping(value = "/api/account/{accountId}", method = RequestMethod.PATCH)
+	public ResponseEntity<String> editAccountField(@PathVariable String accountId, @RequestBody String bodyRaw) {
+		Map<String, String> body = parseBody(bodyRaw);
+		Account accountTrovato = null;
 
-	// if (u == null)
-	// return new ResponseEntity<String>("Universita does not exist",
-	// HttpStatus.NOT_FOUND);
+		for (Account ac : Banca.accounts) {
+			if (ac.getAccountId().equals(accountId)) {
+				accountTrovato = ac;
+				break;
+			}
+		}
 
-	// Corso c = null;
-	// for (Corso co : u.corsi) {
-	// if (co.CorsoDiLaurea.equals(IDcorsoDiLaurea)) {
-	// c = co;
-	// break;
-	// }
-	// }
+		if (accountTrovato != null) {
+			if (body.size() == 1) {
+				if (body.containsKey("name")) {
+					accountTrovato.setName(body.get("name"));
+					return new ResponseEntity<String>("OK!", HttpStatus.OK);
+				} else {
+					if (body.containsKey("surname")) {
+						accountTrovato.setSurname(body.get("surname"));
+						return new ResponseEntity<String>("OK!", HttpStatus.OK);
+					} else
+						return new ResponseEntity<String>("Chiave errata!", HttpStatus.NOT_ACCEPTABLE);
+				}
+			} else {
+				return new ResponseEntity<String>("Errore numero chiavi!", HttpStatus.BAD_REQUEST);
+			}
+		} else {
+			return new ResponseEntity<String>("Account non trovato!", HttpStatus.NOT_FOUND);
+		}
+	}
 
-	// if (c == null)
-	// return new ResponseEntity<String>("Corso does not exist",
-	// HttpStatus.NOT_FOUND);
+	// Endpoint HEAD "/api/account/{accountId}"
+	@RequestMapping(value = "/api/account/{accountId}", method = RequestMethod.HEAD)
+	public ResponseEntity getNameAndSurname(@PathVariable String accountId, @RequestBody String bodyRaw) {
+		Map<String, String> body = parseBody(bodyRaw);
+		Account accountTrovato = null;
 
-	// Esame e = new Esame(body.get("nome"), Integer.parseInt(body.get("cfu")));
+		for (Account ac : Banca.accounts) {
+			if (ac.getAccountId().equals(accountId)) {
+				accountTrovato = ac;
+				break;
+			}
+		}
 
-	// if (c.esami.add(e)) {
-	// HttpHeaders headers = new HttpHeaders();
-	// headers.add("Location", "/api/" + IDuniversita + "/" + IDcorsoDiLaurea + "/"
-	// + body.get("nome") + "/");
+		if (accountTrovato != null) {
+			return new ResponseEntity<String>(accountTrovato.getName() + " " + accountTrovato.getSurname(),
+					HttpStatus.OK);
+		} else {
+			return new ResponseEntity<String>("-1", HttpStatus.NOT_ACCEPTABLE);
+		}
+	}
 
-	// return new ResponseEntity<String>("OK", headers, HttpStatus.CREATED);
-	// } else
-	// return new ResponseEntity<String>("Failed", HttpStatus.OK);
-	// }
+	// Endpoint POST "/api/transfer" for transfer money
+	@RequestMapping(value = "/api/transfer", method = RequestMethod.POST)
+	public ResponseEntity tranfer(@RequestBody String bodyRaw) {
+		// from
+		// to
+		// amount
+		Map<String, String> body = parseBody(bodyRaw);
 
-	// @RequestMapping(value = "/api/{IDuniversita}/{IDcorsoDiLaurea}/{esame}/",
-	// method = RequestMethod.DELETE)
-	// public String removeEsame(@PathVariable String IDuniversita, @PathVariable
-	// String IDcorsoDiLaurea,
+		double amount = Double.parseDouble((body.get("amount")));
+		String from = body.get("from");
+		String to = body.get("to");
 
-	// @PathVariable String esame) {
-	// Universita u = null;
-	// for (Universita un : EsrestApplication.universita) {
-	// if (un.NomeUniversita.equals(IDuniversita)) {
-	// u = un;
-	// break;
-	// }
-	// }
+		Account accountTrovato = null;
+		for (Account ac : Banca.accounts) {
+			if (ac.getAccountId().equals(from)) {
+				accountTrovato = ac;
+				break;
+			}
+		}
+		Account account2 = null;
+		for (Account ac : Banca.accounts) {
+			if (ac.getAccountId().equals(to)) {
+				account2 = ac;
+				break;
+			}
+		}
+		if (accountTrovato != null) {
+			double saldo = accountTrovato.getSaldo();
+			double saldo2 = account2.getSaldo();
+			if (amount < 0 && saldo < amount) {
+				// if the value is -1 its an error
+				return new ResponseEntity<String>("-1", HttpStatus.NOT_ACCEPTABLE);
+			} else if (amount > 0) {
 
-	// if (u != null) {
-	// Corso c = null;
-	// for (Corso co : u.corsi) {
-	// if (co.CorsoDiLaurea.equals(IDcorsoDiLaurea)) {
-	// c = co;
-	// break;
-	// }
-	// }
+				Transazione t = new Transazione(new Date(System.currentTimeMillis()), amount,
+						accountTrovato.getAccountId(), account2.getAccountId());
 
-	// if (c != null) {
-	// Esame e = null;
-	// for (Esame es : c.esami) {
-	// if (es.nome.equals(esame)) {
-	// e = es;
-	// break;
-	// }
-	// }
+				accountTrovato.addTransazione(t);
+				account2.addTransazione(t);
 
-	// if (e != null) {
-	// if (c.esami.remove(e))
-	// return "OK!";
-	// else
-	// return "Failed!";
-	// } else
-	// return "Failed";
+				saldo += amount;
+				accountTrovato.setSaldo(saldo);
+				account2.setSaldo(saldo2);
+				return new ResponseEntity<PrelievoDeposito>(new PrelievoDeposito(saldo), HttpStatus.OK);
+			} else {
+				return new ResponseEntity<String>("-1", HttpStatus.NOT_ACCEPTABLE);
+			}
+		} else {
+			return new ResponseEntity<PrelievoDeposito>(new PrelievoDeposito(-1), HttpStatus.NOT_ACCEPTABLE);
+		}
+	}
 
-	// } else
-	// return "Failed";
-	// } else
-	// return "Failed";
-	// }
+	// Endpoint POST "/api/divert"
+	@RequestMapping(value = "/api/divert", method = RequestMethod.POST)
+	public ResponseEntity<String> annullaTransazione(@RequestBody String bodyRaw) {
 
-	// @RequestMapping(value = "/api/{IDuniversita}/{IDcorsoDiLaurea}/{esame}/",
-	// method = RequestMethod.PUT)
-	// public String updateCFU(@PathVariable String IDuniversita, @PathVariable
-	// String IDcorsoDiLaurea,
+		Map<String, String> body = parseBody(bodyRaw);
 
-	// @PathVariable String esame,
+		String id = body.get("id");
+		Transazione transazioneCanc = null;
 
-	// @RequestParam String cfu) {
+		for (Transazione t : Banca.transazioniTotali) {
+			if (t.getIdentificativo().equals(id)) {
+				transazioneCanc = t;
+				break;
+			}
+		}
 
-	// Universita u = null;
-	// for (Universita un : EsrestApplication.universita) {
-	// if (un.NomeUniversita.equals(IDuniversita)) {
-	// u = un;
-	// break;
-	// }
-	// }
+		Account beneficiario = null, mittente = null;
 
-	// if (u != null) {
-	// Corso c = null;
-	// for (Corso co : u.corsi) {
-	// if (co.CorsoDiLaurea.equals(IDcorsoDiLaurea)) {
-	// c = co;
-	// break;
-	// }
-	// }
-	// Esame e = null;
-	// if (c != null) {
-	// for (Esame ee : c.esami) {
-	// if (ee.nome.equals(esame)) {
-	// e = ee;
-	// break;
-	// }
-	// }
+		if (transazioneCanc != null) {
+			for (Account ac : Banca.accounts) {
+				if (ac.getAccountId().equals(transazioneCanc.getToId())) {
+					mittente = ac;
+				} else {
+					if (ac.getAccountId().equals(transazioneCanc.getFromId())) {
+						beneficiario = ac;
+					}
+				}
+				if (mittente != null && beneficiario != null)
+					break;
+			}
 
-	// if (e != null) {
-	// e.cfu = Integer.parseInt(cfu);
-	// return "Success!";
-	// } else {
-	// return "Failed";
-	// }
+			if (mittente.getSaldo() >= transazioneCanc.getImporto()) {
+				Transazione nuovaTransazione = new Transazione(new Date(System.currentTimeMillis()),
+						transazioneCanc.getImporto(), transazioneCanc.getToId(), transazioneCanc.getFromId());
+				if (Banca.transazioniTotali.add(nuovaTransazione)) {
+					mittente.setSaldo(-transazioneCanc.getImporto());
+					beneficiario.setSaldo(transazioneCanc.getImporto());
+					return new ResponseEntity<String>("Transazione annullata correttamente!", HttpStatus.OK);
+				} else
+					return new ResponseEntity<String>("Inserimento non riuscito!",
+							HttpStatus.INTERNAL_SERVER_ERROR);
+			} else {
+				return new ResponseEntity<String>("Importo del beneficiario non sufficiente!",
+						HttpStatus.NOT_ACCEPTABLE);
+			}
 
-	// } else
-	// return "Failed";
-
-	// } else
-	// return "Failed";
-
-	// }
-
+		} else {
+			return new ResponseEntity<String>("Transazione non trovata!", HttpStatus.NOT_FOUND);
+		}
+	}
 }

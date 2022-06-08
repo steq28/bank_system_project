@@ -7,13 +7,15 @@ public class Transazione {
     private Date data;
     private String identificativo;
     private double importo;
-    private String beneficiarioId;
+    private String fromId;
+    private String toId;
 
-    public Transazione(Date data, double importo, String beneficiarioId) {
+    public Transazione(Date data, double importo, String fromId, String toId) {
         this.data = data;
         this.identificativo = UUID.randomUUID().toString();
         this.importo = importo;
-        this.beneficiarioId = beneficiarioId;
+        this.fromId = fromId;
+        this.toId = toId;
     }
 
     public Date getData() {
@@ -28,8 +30,12 @@ public class Transazione {
         return importo;
     }
 
-    public String getBeneficiarioId() {
-        return beneficiarioId;
+    public String getFromId() {
+        return fromId;
+    }
+
+    public String getToId() {
+        return toId;
     }
 
 }
