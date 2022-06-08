@@ -3,7 +3,7 @@
 Michele Banfi 869294  
 Stefano Quaggio 866504
 
-Le api che il nostro server espone sono le seguenti:
+Gli endpoint che il nostro server espone sono le seguenti:
 
 - `/api/account`
 
