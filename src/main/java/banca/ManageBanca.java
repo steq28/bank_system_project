@@ -1,5 +1,12 @@
 package banca;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Paths;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -31,10 +38,33 @@ public class ManageBanca {
 	}
 
 	// Endpoint GET "/" main
-	@RequestMapping("/")
-	public String getIndex() {
-		return "<html>SIUM</html>";
+	@RequestMapping(method = RequestMethod.GET, value = "/")
+	public String index() throws IOException, URISyntaxException {
+		URL res = getClass().getClassLoader().getResource("index.html");
+		File file = Paths.get(res.toURI()).toFile();
+		String absolutePath = file.getAbsolutePath();
+		BufferedReader reader = new BufferedReader(new FileReader(absolutePath));
+		String line = null;
+		StringBuilder stringBuilder = new StringBuilder();
+		String ls = System.getProperty("line.separator");
+
+		try {
+			while ((line = reader.readLine()) != null) {
+				stringBuilder.append(line);
+				stringBuilder.append(ls);
+			}
+
+			return stringBuilder.toString();
+		} finally {
+			reader.close();
+		}
 	}
+
+	// Endpoint GET "/" main
+	// @RequestMapping("/")
+	// public String getIndex() {
+	// return "<html>SIUM</html>";
+	// }
 
 	// Endpoint GET "/api/account"
 	@RequestMapping(value = "/api/account", method = RequestMethod.GET)
