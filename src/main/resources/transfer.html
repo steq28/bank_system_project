@@ -10,11 +10,17 @@
       integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor"
       crossorigin="anonymous"
     />
+    <link rel="stylesheet" href="stile.css" />
     <title>Transazione</title>
   </head>
-  <body>
-    <div class="container">
-      <form id="form">
+  <body class="area">
+    <div
+      class="container w-50 p-3 position-absolute top-50 start-50 translate-middle d-grid gap-4"
+    >
+      <h1 class="text-center my-3 text-white">
+        <strong>NUOVA TRANSAZIONE</strong>
+      </h1>
+      <form class="d-grid gap-4" id="form">
         <div class="form-floating mb-3">
           <input
             type="text"
@@ -52,9 +58,24 @@
         </div>
       </form>
       <div class="col text-center">
-        <button onClick="checkData()" class="btn btn-primary">Conferma</button>
+        <button onClick="checkData()" class="btn btn-danger">Conferma</button>
       </div>
     </div>
+    <ul class="circles">
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+    </ul>
+
     <script
       src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"
       type="text/javascript"
