@@ -5,8 +5,103 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BANKA!</title>
+    <style>
+      tr:first-child {
+        font-weight: bold;
+      }
+    </style>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+      integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+      integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+      integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+      integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"
+      type="text/javascript"
+    ></script>
+    <script>
+      var accountId = "";
+
+      function getAccount() {
+        accountId = $("#accountId").val();
+        getData();
+      }
+
+      function getData() {
+        accountId = $("#accountId").val();
+        document.getElementById("transazioni").innerHTML = " ";
+        $.get(
+          `http://localhost:8080/api/account/${accountId}`,
+          function (data) {
+            data.transazioni.forEach(myFunction);
+          }
+        );
+      }
+      function myFunction(item, index) {
+        document.getElementById("transazioni").innerHTML +=
+          "<tr><td>" +
+          item.fromId +
+          "</td><td>" +
+          item.toId +
+          "</td><td>" +
+          item.importo +
+          "</td><td>" +
+          new Date(item.data) +
+          "</td></tr>";
+      }
+
+      // $(document).ready(function () {
+      //   getData();
+      // });
+    </script>
   </head>
   <body>
     subemelaradio
+    <div class="container">
+      <table>
+        <tr>
+          <td>
+            <input
+              type="text"
+              id="accountId"
+              placeholder="Id account"
+              class="form-control form-control-sm"
+            />
+          </td>
+          <td>
+            <button onClick="getAccount()" class="btn btn-warning">Ok</button>
+          </td>
+        </tr>
+      </table>
+      <h2 id="titolo">Elenco Transazioni</h2>
+
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">From</th>
+            <th scope="col">To</th>
+            <th scope="col">Importo</th>
+            <th scope="col">Data</th>
+          </tr>
+        </thead>
+        <tbody id="transazioni" name="transazioni"></tbody>
+      </table>
+    </div>
   </body>
 </html>

@@ -60,11 +60,28 @@ public class ManageBanca {
 		}
 	}
 
-	// Endpoint GET "/" main
-	// @RequestMapping("/")
-	// public String getIndex() {
-	// return "<html>SIUM</html>";
-	// }
+	// Endpoint GET "/transfer" transfer
+	@RequestMapping(method = RequestMethod.GET, value = "/transfer")
+	public String transfer() throws IOException, URISyntaxException {
+		URL res = getClass().getClassLoader().getResource("transfer.html");
+		File file = Paths.get(res.toURI()).toFile();
+		String absolutePath = file.getAbsolutePath();
+		BufferedReader reader = new BufferedReader(new FileReader(absolutePath));
+		String line = null;
+		StringBuilder stringBuilder = new StringBuilder();
+		String ls = System.getProperty("line.separator");
+
+		try {
+			while ((line = reader.readLine()) != null) {
+				stringBuilder.append(line);
+				stringBuilder.append(ls);
+			}
+
+			return stringBuilder.toString();
+		} finally {
+			reader.close();
+		}
+	}
 
 	// Endpoint GET "/api/account"
 	@RequestMapping(value = "/api/account", method = RequestMethod.GET)
