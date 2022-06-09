@@ -17,38 +17,6 @@
       integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor"
       crossorigin="anonymous"
     />
-    <script>
-      var accountId = "";
-
-      function getAccount() {
-        accountId = $("#accountId").val();
-        getData();
-      }
-
-      function getData() {
-        accountId = $("#accountId").val();
-        document.getElementById("transazioni").innerHTML = " ";
-        $.get(
-          `http://localhost:8080/api/account/${accountId}`,
-          function (data) {
-            data.transazioni.forEach(myFunction);
-            console.log(data);
-          }
-        );
-      }
-      function myFunction(item, index) {
-        document.getElementById("transazioni").innerHTML +=
-          "<tr><td>" +
-          item.fromId +
-          "</td><td>" +
-          item.toId +
-          "</td><td>" +
-          item.importo +
-          "</td><td>" +
-          new Date(item.data) +
-          "</td></tr>";
-      }
-    </script>
   </head>
   <body class="area">
     <div class="container w-75 p-3">
@@ -103,6 +71,54 @@
       integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2"
       crossorigin="anonymous"
     ></script>
+    <script>
+      var accountId = "";
+
+      function getAccount() {
+        accountId = $("#accountId").val();
+        getData();
+      }
+
+      function getData() {
+        accountId = $("#accountId").val();
+        document.getElementById("transazioni").innerHTML = " ";
+        /*$.get(
+          `http://localhost:8080/api/account/${accountId}`,
+          function (data) {
+            data.transazioni.forEach(myFunction);
+            console.log(data);
+          }
+        );*/
+
+        $.ajax({
+          url: `http://localhost:8080/api/account/${accountId}`,
+          type: 'GET',
+          success: function(data){ 
+            data.transazioni.forEach(myFunction);
+          },
+          error: function(data) {
+            $("#accountId").addClass("is-invalid");
+          }
+        });
+      }
+
+      $("input").on("input", function () {
+        $(this).removeClass("is-invalid");
+      });
+
+      function myFunction(item, index) {
+        document.getElementById("transazioni").innerHTML +=
+          "<tr><td>" +
+          item.fromId +
+          "</td><td>" +
+          item.toId +
+          "</td><td>" +
+          item.importo +
+          "</td><td>" +
+          new Date(item.data) +
+          "</td></tr>";
+      }
+    </script>
     <style>
       @import url("https://fonts.googleapis.com/css?family=Exo:400,700");
       * {
