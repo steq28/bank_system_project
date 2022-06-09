@@ -100,6 +100,7 @@ public class ManageBanca {
 		Account ac = new Account(body.get("name"), body.get("surname"), uniqueID);
 
 		Banca.accounts.add(ac);
+		Banca.reset();
 	}
 
 	@RequestMapping(value = "/api/account", method = RequestMethod.DELETE)
@@ -114,9 +115,10 @@ public class ManageBanca {
 		}
 
 		if (removeThis != null) {
-			if (Banca.accounts.remove(removeThis))
+			if (Banca.accounts.remove(removeThis)) {
+				Banca.reset();
 				return new ResponseEntity<String>("OK", HttpStatus.OK);
-			else
+			} else
 				return new ResponseEntity<String>("Failed to remove", HttpStatus.BAD_REQUEST);
 		} else
 			return new ResponseEntity<String>("Account not found!", HttpStatus.NOT_FOUND);
@@ -124,7 +126,7 @@ public class ManageBanca {
 
 	// Endpoint GET "/api/account/{accountId}"
 	@RequestMapping(value = "/api/account/{accountId}", method = RequestMethod.GET)
-	public ResponseEntity<Proprietario> getAccountDetails(@PathVariable String accountId) {
+	public ResponseEntity getAccountDetails(@PathVariable String accountId) {
 		Account accountTrovato = null;
 		for (Account ac : Banca.accounts) {
 			if (ac.getAccountId().equals(accountId)) {
@@ -136,19 +138,18 @@ public class ManageBanca {
 		if (accountTrovato != null) {
 			Proprietario proprietario = new Proprietario(accountTrovato.getName(), accountTrovato.getSurname(),
 					accountTrovato.getSaldo(), accountTrovato.getTransazioni());
-
 			// return proprietario;
 			return new ResponseEntity<Proprietario>(proprietario, HttpStatus.OK);
 
 		} else {
 			// TODO: ritorna un errore di "account non trovato"
-			return new ResponseEntity<Proprietario>(new Proprietario("", "", -1.0, null), HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<String>("", HttpStatus.BAD_REQUEST);
 		}
 	}
 
 	// Endpoint POST "/api/account/{accountId}" for Prelevare/Depositare
 	@RequestMapping(value = "/api/account/{accountId}", method = RequestMethod.POST)
-	public ResponseEntity<PrelievoDeposito> prelevaDeposita(@PathVariable String accountId,
+	public ResponseEntity prelevaDeposita(@PathVariable String accountId,
 			@RequestBody String bodyRaw) {
 
 		Map<String, String> body = parseBody(bodyRaw);
@@ -166,14 +167,15 @@ public class ManageBanca {
 			double saldo = accountTrovato.getSaldo();
 			if (amount < 0 && saldo < amount) {
 				// if the value is -1 its an error
-				return new ResponseEntity<PrelievoDeposito>(new PrelievoDeposito(-1.0), HttpStatus.NOT_ACCEPTABLE);
+				return new ResponseEntity<String>("", HttpStatus.NOT_ACCEPTABLE);
 			} else {
 				saldo += amount;
 				accountTrovato.setSaldo(saldo);
+				Banca.reset();
 				return new ResponseEntity<PrelievoDeposito>(new PrelievoDeposito(saldo), HttpStatus.OK);
 			}
 		} else {
-			return new ResponseEntity<PrelievoDeposito>(new PrelievoDeposito(-1.0), HttpStatus.NOT_ACCEPTABLE);
+			return new ResponseEntity<String>("", HttpStatus.NOT_ACCEPTABLE);
 		}
 	}
 
@@ -193,6 +195,7 @@ public class ManageBanca {
 		if (accountTrovato != null && body.containsKey("name") && body.containsKey("surname")) {
 			accountTrovato.setName(body.get("name"));
 			accountTrovato.setSurname(body.get("surname"));
+			Banca.reset();
 			return new ResponseEntity<String>("OK!", HttpStatus.OK);
 		} else {
 			return new ResponseEntity<String>("Fail!", HttpStatus.BAD_REQUEST);
@@ -216,10 +219,12 @@ public class ManageBanca {
 			if (body.size() == 1) {
 				if (body.containsKey("name")) {
 					accountTrovato.setName(body.get("name"));
+					Banca.reset();
 					return new ResponseEntity<String>("OK!", HttpStatus.OK);
 				} else {
 					if (body.containsKey("surname")) {
 						accountTrovato.setSurname(body.get("surname"));
+						Banca.reset();
 						return new ResponseEntity<String>("OK!", HttpStatus.OK);
 					} else
 						return new ResponseEntity<String>("Chiave errata!", HttpStatus.NOT_ACCEPTABLE);
@@ -300,6 +305,8 @@ public class ManageBanca {
 				saldo2 += amount;
 				accountTrovato.setSaldo(saldo);
 				account2.setSaldo(saldo2);
+				Banca.reset();
+				// TODO sistemare in base al file
 				return new ResponseEntity<PrelievoDeposito>(new PrelievoDeposito(saldo), HttpStatus.OK);
 			} else {
 				return new ResponseEntity<String>("-1", HttpStatus.NOT_ACCEPTABLE);
@@ -350,7 +357,7 @@ public class ManageBanca {
 					mittente.addTransazione(nuovaTransazione);
 					beneficiario.addTransazione(nuovaTransazione);
 					Banca.transazioniTotali.add(nuovaTransazione);
-
+					Banca.reset();
 					return new ResponseEntity<String>("Transazione annullata correttamente!", HttpStatus.OK);
 				} else
 					return new ResponseEntity<String>("Inserimento non riuscito!",

@@ -2,7 +2,8 @@
   {
     "name": "michele",
     "surname": "banfi",
-    "amount": 30.0,
-    "accoundId": "3be31cfa-067c-4511-afd7-f8783fb257f1"
+    "saldo": 30.0,
+    "accountId": "3be31cfa-067c-4511-afd7-f8783fb257f1",
+    "transazioni": []
   }
 ]

@@ -17,7 +17,7 @@
     <div
       class="container w-50 p-3 position-absolute top-50 start-50 translate-middle d-grid gap-4"
     >
-      <h1 class="text-center my-3 text-white">
+      <h1 class="text-center my-3 text-primary">
         <strong>NUOVA TRANSAZIONE</strong>
       </h1>
       <form class="d-grid gap-4" id="form">
@@ -58,7 +58,9 @@
         </div>
       </form>
       <div class="col text-center">
-        <button onClick="checkData()" class="btn btn-danger">Conferma</button>
+        <button onClick="checkData()" class="btn btn-primary btn-lg">
+          Effettua transazione
+        </button>
       </div>
     </div>
     <ul class="circles">
@@ -116,6 +118,7 @@
 
         if (!err) {
           $.post("/api/transfer", $("#form").serialize()).done(function (data) {
+            console.log(data);
             /*if (data == "OK") {
               $("#form")[0].reset();
             } else {
