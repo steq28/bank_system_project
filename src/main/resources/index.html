@@ -30,7 +30,11 @@
           Cerca
         </button>
       </div>
-
+      <div>
+        <div id="name">Name:</div>
+        <div id="surname">Surname:</div>
+        <div id="saldo">Saldo:</div>
+      </div>
       <h2 class="text-center mb-4 text-primary" id="titolo">
         <strong>ELENCO TRANSAZIONI</strong>
       </h2>
@@ -91,13 +95,22 @@
 
         $.ajax({
           url: `http://localhost:8080/api/account/${accountId}`,
-          type: 'GET',
-          success: function(data){ 
+          type: "GET",
+          success: function (data) {
+            document.getElementById(
+              "name"
+            ).innerHTML = `Name: <b>${data.nome}</b>`;
+            document.getElementById(
+              "surname"
+            ).innerHTML = `Surname:  <b>${data.cognome} </b>`;
+            document.getElementById(
+              "saldo"
+            ).innerHTML = `Saldo:  <b>${data.saldo} </b>`;
             data.transazioni.forEach(myFunction);
           },
-          error: function(data) {
+          error: function (data) {
             $("#accountId").addClass("is-invalid");
-          }
+          },
         });
       }
 
@@ -106,10 +119,10 @@
       });
 
       function myFunction(item, index) {
-        let date=new Date(item.data);
+        let date = new Date(item.data);
 
         let day = date.getDate() + "";
-        let month = date.toLocaleString('it-IT', { month: 'long' }) + "";
+        let month = date.toLocaleString("it-IT", { month: "long" }) + "";
         let year = date.getFullYear() + "";
         let hour = date.getHours() + "";
         let minutes = date.getMinutes() + "";
@@ -129,12 +142,22 @@
           "</td><td>" +
           item.importo +
           "&#8364;</td><td>" +
-            day + " " + month + " " + year + ", " + hour + ":" + minutes + ":" + seconds+
+          day +
+          " " +
+          month +
+          " " +
+          year +
+          ", " +
+          hour +
+          ":" +
+          minutes +
+          ":" +
+          seconds +
           "</td></tr>";
       }
 
-      function checkZero(data){
-        if(data.length == 1){
+      function checkZero(data) {
+        if (data.length == 1) {
           data = "0" + data;
         }
         return data;
@@ -149,6 +172,9 @@
 
       body {
         font-family: "Exo", sans-serif;
+      }
+      tr:first-child {
+        font-weight: bold;
       }
 
       .context {
