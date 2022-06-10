@@ -10,12 +10,6 @@
       href="https://content.unicredit.it/etc/designs/ucpublic/it/img/favicon/apple-touch-icon-57x57.png"
     />
     <title>Banca online</title>
-    <style>
-      tr:first-child {
-        font-weight: bold;
-      }
-    </style>
-
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -112,6 +106,21 @@
       });
 
       function myFunction(item, index) {
+        let date=new Date(item.data);
+
+        let day = date.getDate() + "";
+        let month = date.toLocaleString('it-IT', { month: 'long' }) + "";
+        let year = date.getFullYear() + "";
+        let hour = date.getHours() + "";
+        let minutes = date.getMinutes() + "";
+        let seconds = date.getSeconds() + "";
+
+        day = checkZero(day);
+        year = checkZero(year);
+        hour = checkZero(hour);
+        minutes = checkZero(minutes);
+        seconds = checkZero(seconds);
+
         document.getElementById("transazioni").innerHTML +=
           "<tr><td>" +
           item.fromId +
@@ -119,9 +128,16 @@
           item.toId +
           "</td><td>" +
           item.importo +
-          "</td><td>" +
-          new Date(item.data) +
+          "&#8364;</td><td>" +
+            day + " " + month + " " + year + ", " + hour + ":" + minutes + ":" + seconds+
           "</td></tr>";
+      }
+
+      function checkZero(data){
+        if(data.length == 1){
+          data = "0" + data;
+        }
+        return data;
       }
     </script>
     <style>

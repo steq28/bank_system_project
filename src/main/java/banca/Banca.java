@@ -1,5 +1,6 @@
 package banca;
 
+import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
@@ -25,8 +26,21 @@ public class Banca {
 
 	public static void reset() {
 		try {
-			gson.toJson(accounts, new FileWriter("src/main/resources/db/accounts.json"));
-			gson.toJson(transazioniTotali, new FileWriter("src/main/resources/db/transazioni.json"));
+			// TODO: controllare questo punto
+
+			// gson.toJson(accounts, new FileWriter("src/main/resources/db/accounts.json"));
+			// gson.toJson(transazioniTotali, new
+			// FileWriter("src/main/resources/db/transazioni.json"));
+			String jsonAccounts = gson.toJson(accounts), jsonTransazioni = gson.toJson(transazioniTotali);
+			BufferedWriter writer = new BufferedWriter(new FileWriter("src/main/resources/db/accounts.json"));
+			writer.write(jsonAccounts);
+			writer.close();
+
+			writer = new BufferedWriter(new FileWriter("src/main/resources/db/transazioni.json"));
+			writer.write(jsonTransazioni);
+
+			writer.close();
+
 		} catch (JsonIOException e) {
 			System.out.println("Error during JSON parsing");
 			e.printStackTrace();
@@ -46,6 +60,13 @@ public class Banca {
 			}.getType());
 			accounts = new Gson().fromJson(accountReader, new TypeToken<List<Account>>() {
 			}.getType());
+
+			if (transazioniTotali == null)
+				transazioniTotali = new ArrayList<Transazione>();
+
+			if (accounts == null)
+				accounts = new ArrayList<Account>();
+			// System.out.println(transazioniTotali);
 
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
