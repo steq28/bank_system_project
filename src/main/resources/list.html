@@ -4,67 +4,18 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Account list</title>
     <link
       rel="icon"
       sizes="57x57"
       href="https://content.unicredit.it/etc/designs/ucpublic/it/img/favicon/apple-touch-icon-57x57.png"
     />
-    <title>Banca online</title>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css"
       rel="stylesheet"
       integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor"
       crossorigin="anonymous"
     />
-  </head>
-  <body class="area">
-    <div class="container w-75 p-3">
-      <div class="input-group w-50 mt-4 start-50 translate-middle">
-        <input
-          type="text"
-          id="accountId"
-          placeholder="Inserisci account ID..."
-          class="form-control form-control-sm shadow-none"
-        />
-        <button onClick="getAccount()" class="btn btn-success shadow-none">
-          Cerca
-        </button>
-      </div>
-      <div>
-        <div id="name">Name:</div>
-        <div id="surname">Surname:</div>
-        <div id="saldo">Saldo:</div>
-      </div>
-      <h2 class="text-center mb-4 text-primary" id="titolo">
-        <strong>ELENCO TRANSAZIONI</strong>
-      </h2>
-
-      <table class="table table-bordered table-hover">
-        <thead>
-          <tr>
-            <th scope="col">From</th>
-            <th scope="col">To</th>
-            <th scope="col">Importo</th>
-            <th scope="col">Data</th>
-          </tr>
-        </thead>
-        <tbody id="transazioni" name="transazioni"></tbody>
-      </table>
-    </div>
-    <ul class="circles">
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-    </ul>
     <script
       src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"
       type="text/javascript"
@@ -74,87 +25,6 @@
       integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2"
       crossorigin="anonymous"
     ></script>
-    <script>
-      var accountId = "";
-
-      function getAccount() {
-        accountId = $("#accountId").val();
-        getData();
-      }
-
-      function getData() {
-        accountId = $("#accountId").val();
-        document.getElementById("transazioni").innerHTML = " ";
-        $.ajax({
-          url: `http://localhost:8080/api/account/${accountId}`,
-          type: "GET",
-          success: function (data) {
-            document.getElementById(
-              "name"
-            ).innerHTML = `Name: <b>${data.nome}</b>`;
-            document.getElementById(
-              "surname"
-            ).innerHTML = `Surname:  <b>${data.cognome} </b>`;
-            document.getElementById(
-              "saldo"
-            ).innerHTML = `Saldo:  <b>${data.saldo} </b>`;
-            data.transazioni.forEach(myFunction);
-          },
-          error: function (data) {
-            $("#accountId").addClass("is-invalid");
-          },
-        });
-      }
-
-      $("input").on("input", function () {
-        $(this).removeClass("is-invalid");
-      });
-
-      function myFunction(item, index) {
-        let date = new Date(item.data);
-
-        let day = date.getDate() + "";
-        let month = date.toLocaleString("it-IT", { month: "long" }) + "";
-        let year = date.getFullYear() + "";
-        let hour = date.getHours() + "";
-        let minutes = date.getMinutes() + "";
-        let seconds = date.getSeconds() + "";
-
-        day = checkZero(day);
-        year = checkZero(year);
-        hour = checkZero(hour);
-        minutes = checkZero(minutes);
-        seconds = checkZero(seconds);
-
-        document.getElementById("transazioni").innerHTML +=
-          "<tr><td>" +
-          item.fromId +
-          "</td><td>" +
-          item.toId +
-          "</td><td>" +
-          item.importo +
-          "&#8364;</td><td>" +
-          day +
-          " " +
-          month +
-          " " +
-          year +
-          ", " +
-          hour +
-          ":" +
-          minutes +
-          ":" +
-          seconds +
-          "</td></tr>";
-      }
-
-      function checkZero(data) {
-        if (data.length == 1) {
-          data = "0" + data;
-        }
-        return data;
-      }
-    </script>
     <style>
       @import url("https://fonts.googleapis.com/css?family=Exo:400,700");
       * {
@@ -298,5 +168,62 @@
         }
       }
     </style>
+    <script>
+      window.onload = () => {
+        $.ajax({
+          url: `http://localhost:8080/api/account/`,
+          type: "GET",
+          success: function (data) {
+            console.log(data);
+            data.forEach((item) => {
+              document.getElementById("accounts").innerHTML +=
+                "<tr><td>" +
+                item.accountId +
+                "</td><td>" +
+                item.name +
+                "</td><td>" +
+                item.surname +
+                "</td><td>" +
+                item.saldo +
+                "</td></tr>";
+            });
+          },
+          error: function (data) {
+            $("#accountId").addClass("is-invalid");
+          },
+        });
+      };
+
+      $("input").on("input", function () {
+        $(this).removeClass("is-invalid");
+      });
+    </script>
+  </head>
+  <body class="area">
+    <table class="table table-bordered table-hover">
+      <thead>
+        <tr>
+          <th scope="col">Account ID</th>
+          <th scope="col">Name</th>
+          <th scope="col">Surname</th>
+          <th scope="col">Saldo</th>
+        </tr>
+      </thead>
+      <tbody id="accounts" name="accountsr"></tbody>
+    </table>
+    <ul class="circles">
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+    </ul>
   </body>
 </html>
