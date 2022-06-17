@@ -19,20 +19,28 @@
 	</head>
 	<body class="area">
 		<div class="container w-75 p-3">
-			<div class="input-group w-50 mt-4 start-50 translate-middle">
+			<div class="input-group w-50 my-2 start-50 translate-middle-x">
 				<input
 					type="text"
 					id="accountId"
 					placeholder="Inserisci account ID..."
 					class="form-control form-control-sm shadow-none"
 				/>
+
 				<button
 					onClick="getAccount()"
 					class="btn btn-success shadow-none"
+					style="
+						border-radius: 0.25rem;
+						border-top-left-radius: 0;
+						border-bottom-left-radius: 0;
+					"
 				>
 					Cerca
 				</button>
+				<span class="invalid-feedback" id="error-message"></span>
 			</div>
+
 			<div class="container">
 				<div class="row">
 					<div class="col d-flex flex-row">
@@ -109,6 +117,7 @@
 					$("#accountId").addClass("is-valid");
 					getData(accountId);
 				} else {
+					$("#error-message").html("Formato id errato!");
 					$("#accountId").addClass("is-invalid");
 				}
 			}
@@ -130,6 +139,8 @@
 						data.transazioni.forEach(myFunction);
 					},
 					error: function (data) {
+						console.log(data);
+						$("#error-message").html(data.responseText);
 						$("#accountId").addClass("is-invalid");
 					}
 				});

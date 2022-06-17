@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import org.springframework.http.HttpHeaders;
 import java.nio.file.Paths;
 import java.util.Date;
 import java.util.HashMap;
@@ -83,7 +84,7 @@ public class ManageBanca {
 		}
 	}
 
-	// Endpoint GET "/" list
+	// Endpoint GET "/list" list
 	@RequestMapping(method = RequestMethod.GET, value = "/list")
 	public String list() throws IOException, URISyntaxException {
 		URL res = getClass().getClassLoader().getResource("list.html");
@@ -116,7 +117,7 @@ public class ManageBanca {
 	@RequestMapping(value = "/api/account", method = RequestMethod.POST)
 	public void createAccount(@RequestBody String bodyRaw) {
 
-		String uniqueID = UUID.randomUUID().toString(); // se escono uguali faccio la rinuncia agli studi
+		String uniqueID = UUID.randomUUID().toString();
 
 		Map<String, String> body = parseBody(bodyRaw);
 
@@ -144,7 +145,7 @@ public class ManageBanca {
 			} else
 				return new ResponseEntity<String>("Failed to remove", HttpStatus.BAD_REQUEST);
 		} else
-			return new ResponseEntity<String>("Account not found!", HttpStatus.NOT_FOUND);
+			return new ResponseEntity<String>("Account non trovato!", HttpStatus.NOT_FOUND);
 	}
 
 	// Endpoint GET "/api/account/{accountId}"
@@ -161,12 +162,13 @@ public class ManageBanca {
 		if (accountTrovato != null) {
 			Proprietario proprietario = new Proprietario(accountTrovato.getName(), accountTrovato.getSurname(),
 					accountTrovato.getSaldo(), accountTrovato.getTransazioni());
-			// return proprietario;
-			return new ResponseEntity<Proprietario>(proprietario, HttpStatus.OK);
+
+			HttpHeaders responseHeaders = new HttpHeaders();
+			responseHeaders.set("X-Sistema-Bancario", accountTrovato.getName() + ";" + accountTrovato.getSurname());
+			return new ResponseEntity<Proprietario>(proprietario, responseHeaders, HttpStatus.OK);
 
 		} else {
-			// TODO: ritorna un errore di "account non trovato"
-			return new ResponseEntity<String>("", HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<String>("Account non trovato!", HttpStatus.NOT_FOUND);
 		}
 	}
 
@@ -186,11 +188,11 @@ public class ManageBanca {
 				break;
 			}
 		}
+
 		if (accountTrovato != null) {
 			double saldo = accountTrovato.getSaldo();
-			if (amount < 0 && saldo < amount) {
-				// if the value is -1 its an error
-				return new ResponseEntity<String>("", HttpStatus.NOT_ACCEPTABLE);
+			if (amount < 0 && saldo < (-1 * amount)) {
+				return new ResponseEntity<String>("Saldo non sufficiente!", HttpStatus.NOT_ACCEPTABLE);
 			} else {
 				saldo += amount;
 				accountTrovato.setSaldo(saldo);
@@ -198,7 +200,7 @@ public class ManageBanca {
 				return new ResponseEntity<PrelievoDeposito>(new PrelievoDeposito(saldo), HttpStatus.OK);
 			}
 		} else {
-			return new ResponseEntity<String>("", HttpStatus.NOT_ACCEPTABLE);
+			return new ResponseEntity<String>("Account non trovato!", HttpStatus.NOT_FOUND);
 		}
 	}
 
@@ -263,6 +265,7 @@ public class ManageBanca {
 	// Endpoint HEAD "/api/account/{accountId}"
 	@RequestMapping(value = "/api/account/{accountId}", method = RequestMethod.HEAD)
 	public ResponseEntity getNameAndSurname(@PathVariable String accountId, @RequestBody String bodyRaw) {
+		HttpHeaders responseHeaders = new HttpHeaders();
 		Map<String, String> body = parseBody(bodyRaw);
 		Account accountTrovato = null;
 
@@ -274,19 +277,18 @@ public class ManageBanca {
 		}
 
 		if (accountTrovato != null) {
-			return new ResponseEntity<String>(accountTrovato.getName() + " " + accountTrovato.getSurname(),
-					HttpStatus.OK);
+
+			responseHeaders.set("X-Sistema-Bancario",
+					accountTrovato.getName() + ";" + accountTrovato.getSurname());
+			return new ResponseEntity<Void>(responseHeaders, HttpStatus.OK);
 		} else {
-			return new ResponseEntity<String>("-1", HttpStatus.NOT_ACCEPTABLE);
+			return new ResponseEntity<Void>(HttpStatus.NOT_FOUND);
 		}
 	}
 
 	// Endpoint POST "/api/transfer" for transfer money
 	@RequestMapping(value = "/api/transfer", method = RequestMethod.POST)
 	public ResponseEntity tranfer(@RequestBody String bodyRaw) {
-		// from
-		// to
-		// amount
 		Map<String, String> body = parseBody(bodyRaw);
 
 		double amount = Double.parseDouble((body.get("amount")));
@@ -323,6 +325,10 @@ public class ManageBanca {
 				accountTrovato.addTransazione(t);
 				account2.addTransazione(t);
 				Banca.transazioniTotali.add(t);
+
+				Banca.transazioniTotali.forEach((val) -> {
+					System.out.println(val.getImporto());
+				});
 
 				saldo -= amount;
 				saldo2 += amount;
