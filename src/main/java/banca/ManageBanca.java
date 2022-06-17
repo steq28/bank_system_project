@@ -107,6 +107,29 @@ public class ManageBanca {
 		}
 	}
 
+	// Endpoint GET "/register" register
+	@RequestMapping(method = RequestMethod.GET, value = "/register")
+	public String register() throws IOException, URISyntaxException {
+		URL res = getClass().getClassLoader().getResource("register.html");
+		File file = Paths.get(res.toURI()).toFile();
+		String absolutePath = file.getAbsolutePath();
+		BufferedReader reader = new BufferedReader(new FileReader(absolutePath));
+		String line = null;
+		StringBuilder stringBuilder = new StringBuilder();
+		String ls = System.getProperty("line.separator");
+
+		try {
+			while ((line = reader.readLine()) != null) {
+				stringBuilder.append(line);
+				stringBuilder.append(ls);
+			}
+
+			return stringBuilder.toString();
+		} finally {
+			reader.close();
+		}
+	}
+
 	// Endpoint GET "/api/account"
 	@RequestMapping(value = "/api/account", method = RequestMethod.GET)
 	public List<Account> getAccount() {
@@ -116,11 +139,22 @@ public class ManageBanca {
 	// Endpoint POST "/api/account"
 	@RequestMapping(value = "/api/account", method = RequestMethod.POST)
 	public void createAccount(@RequestBody String bodyRaw) {
+		boolean found = true;
+		String uniqueID;
+		do {
+			uniqueID = UUID.randomUUID().toString();
 
-		String uniqueID = UUID.randomUUID().toString();
+			uniqueID = uniqueID.replace("-", "");
+			uniqueID = uniqueID.substring(0, 20);
+
+			String app = uniqueID;
+
+			found = Banca.accounts.stream()
+					.anyMatch(p -> p.getAccountId().equals(app));
+
+		} while (found);
 
 		Map<String, String> body = parseBody(bodyRaw);
-
 		Account ac = new Account(body.get("name"), body.get("surname"), uniqueID);
 
 		Banca.accounts.add(ac);
@@ -311,12 +345,13 @@ public class ManageBanca {
 			}
 		}
 
-		if (accountTrovato != null) {
+		if (accountTrovato != null && account2 != null) {
 			double saldo = accountTrovato.getSaldo();
 			double saldo2 = account2.getSaldo();
 			if (amount < 0 || saldo < amount) {
 				// if the value is -1 its an error
-				return new ResponseEntity<String>("-1", HttpStatus.NOT_ACCEPTABLE);
+				return new ResponseEntity<String>("Saldo non sufficiente per effettuare la transazione!",
+						HttpStatus.NOT_ACCEPTABLE);
 			} else if (amount > 0) {
 
 				Transazione t = new Transazione(new Date(System.currentTimeMillis()), amount,
@@ -326,10 +361,6 @@ public class ManageBanca {
 				account2.addTransazione(t);
 				Banca.transazioniTotali.add(t);
 
-				Banca.transazioniTotali.forEach((val) -> {
-					System.out.println(val.getImporto());
-				});
-
 				saldo -= amount;
 				saldo2 += amount;
 				accountTrovato.setSaldo(saldo);
@@ -338,10 +369,10 @@ public class ManageBanca {
 				// TODO sistemare in base al file
 				return new ResponseEntity<PrelievoDeposito>(new PrelievoDeposito(saldo), HttpStatus.OK);
 			} else {
-				return new ResponseEntity<String>("-1", HttpStatus.NOT_ACCEPTABLE);
+				return new ResponseEntity<String>("Importo deve essere > 0", HttpStatus.NOT_ACCEPTABLE);
 			}
 		} else {
-			return new ResponseEntity<PrelievoDeposito>(new PrelievoDeposito(-1), HttpStatus.NOT_ACCEPTABLE);
+			return new ResponseEntity<String>("Account non trovato!", HttpStatus.NOT_ACCEPTABLE);
 		}
 	}
 

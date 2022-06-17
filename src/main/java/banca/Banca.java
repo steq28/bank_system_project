@@ -32,7 +32,6 @@ public class Banca {
 			// gson.toJson(transazioniTotali, new
 			// FileWriter("src/main/resources/db/transazioni.json"));
 			String jsonAccounts = gson.toJson(accounts), jsonTransazioni = gson.toJson(transazioniTotali);
-			System.out.println(jsonTransazioni);
 			BufferedWriter writer = new BufferedWriter(new FileWriter("src/main/resources/db/accounts.json"));
 			writer.write(jsonAccounts);
 			writer.close();

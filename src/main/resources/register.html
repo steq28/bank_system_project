@@ -1,80 +1,59 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 	<head>
 		<meta charset="UTF-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<link
-			rel="icon"
-			sizes="57x57"
-			href="https://content.unicredit.it/etc/designs/ucpublic/it/img/favicon/apple-touch-icon-57x57.png"
-		/>
-		<title>Banca online</title>
 		<link
 			href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css"
 			rel="stylesheet"
 			integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor"
 			crossorigin="anonymous"
 		/>
+		<link
+			rel="icon"
+			sizes="57x57"
+			href="https://content.unicredit.it/etc/designs/ucpublic/it/img/favicon/apple-touch-icon-57x57.png"
+		/>
+		<title>Register</title>
 	</head>
 	<body class="area">
-		<div class="container w-75 p-3">
-			<div class="input-group w-50 my-2 start-50 translate-middle-x">
-				<input
-					type="text"
-					id="accountId"
-					placeholder="Inserisci account ID..."
-					class="form-control form-control-sm shadow-none"
-				/>
-
-				<button
-					onClick="getAccount()"
-					class="btn btn-success shadow-none"
-					style="
-						border-radius: 0.25rem;
-						border-top-left-radius: 0;
-						border-bottom-left-radius: 0;
-					"
-				>
-					Cerca
-				</button>
-				<span class="invalid-feedback" id="error-message"></span>
-			</div>
-
-			<div class="container">
-				<div class="row">
-					<div class="col d-flex flex-row">
-						<div class="me-lg-5">
-							Name:
-							<p id="name"></p>
-						</div>
-						<div>
-							Surname:
-							<p id="surname"></p>
-						</div>
-					</div>
-
-					<div class="col align-middle text-end">
-						Saldo:
-						<p id="saldo"></p>
-					</div>
+		<div
+			class="container w-50 p-3 position-absolute top-50 start-50 translate-middle d-grid gap-4"
+		>
+			<h1 class="text-center my-3 text-primary">
+				<strong>REGISTER</strong>
+			</h1>
+			<form class="d-grid gap-4" id="form">
+				<div class="form-floating mb-3">
+					<input
+						type="text"
+						class="form-control shadow-none"
+						id="name"
+						name="name"
+						placeholder="Name.. "
+						required
+					/>
+					<label for="floatingInput">Name</label>
 				</div>
-			</div>
-			<h2 class="text-center mb-4 text-primary" id="titolo">
-				<strong>ELENCO TRANSAZIONI</strong>
-			</h2>
 
-			<table class="table table-hover">
-				<thead class="table-danger">
-					<tr>
-						<th scope="col">From</th>
-						<th scope="col">To</th>
-						<th scope="col">Importo</th>
-						<th scope="col">Data</th>
-					</tr>
-				</thead>
-				<tbody id="transazioni" name="transazioni"></tbody>
-			</table>
+				<div class="form-floating mb-3">
+					<input
+						type="text"
+						class="form-control shadow-none"
+						id="surname"
+						name="surname"
+						placeholder="Surname.. "
+						required
+					/>
+					<label for="floatingInput">Surname</label>
+				</div>
+			</form>
+			<div class="col text-center">
+				<button onClick="register()" class="btn btn-primary btn-lg">
+					Register
+				</button>
+			</div>
 		</div>
 		<ul class="circles">
 			<li></li>
@@ -90,6 +69,7 @@
 			<li></li>
 			<li></li>
 		</ul>
+
 		<script
 			src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"
 			type="text/javascript"
@@ -100,98 +80,29 @@
 			crossorigin="anonymous"
 		></script>
 		<script>
-			var accountId = "";
+			function register() {
+				let name = $("#name");
+				let beneficiario = $("#surname");
 
-			function getAccount() {
-				accountId = $("#accountId").val();
-				$("#name").empty();
-				$("#surname").empty();
-				$("#saldo").empty();
-				$("#transazioni").empty();
-
-				const regex = new RegExp(/^[0-9A-F]{20}$/i);
-
-				if (regex.test(accountId)) {
-					$("#accountId").addClass("is-valid");
-					getData(accountId);
-				} else {
-					$("#error-message").html("Formato id errato!");
-					$("#accountId").addClass("is-invalid");
-				}
-			}
-
-			function getData(accountId) {
 				$.ajax({
-					url: `http://localhost:8080/api/account/${accountId}`,
-					type: "GET",
+					url: `http://localhost:8080/api/account/`,
+					type: "POST",
+					data: $("#form").serialize(),
+
 					success: function (data) {
-						document.getElementById(
-							"name"
-						).innerHTML = `<h4><strong>${data.nome}</strong></h4>`;
-						document.getElementById(
-							"surname"
-						).innerHTML = `<h4><strong>${data.cognome}</strong></h4>`;
-						document.getElementById(
-							"saldo"
-						).innerHTML = `<h4><strong>${data.saldo}&#8364;</strong></h4>`;
-						data.transazioni.forEach(myFunction);
+						console.log("No error");
 					},
+
 					error: function (data) {
-						console.log(data);
-						$("#error-message").html(data.responseText);
-						$("#accountId").addClass("is-invalid");
+						console.log("ERROR");
 					}
 				});
-			}
 
-			$("input").on("input", function () {
-				$(this).removeClass("is-invalid");
-			});
-
-			function myFunction(item, index) {
-				let date = new Date(item.data);
-
-				let day = date.getDate() + "";
-				let month =
-					date.toLocaleString("it-IT", { month: "long" }) + "";
-				let year = date.getFullYear() + "";
-				let hour = date.getHours() + "";
-				let minutes = date.getMinutes() + "";
-				let seconds = date.getSeconds() + "";
-
-				day = checkZero(day);
-				year = checkZero(year);
-				hour = checkZero(hour);
-				minutes = checkZero(minutes);
-				seconds = checkZero(seconds);
-
-				document.getElementById("transazioni").innerHTML +=
-					"<tr><td>" +
-					item.fromId +
-					"</td><td>" +
-					item.toId +
-					"</td><td>" +
-					item.importo +
-					"&#8364;</td><td>" +
-					day +
-					" " +
-					month +
-					" " +
-					year +
-					", " +
-					hour +
-					":" +
-					minutes +
-					":" +
-					seconds +
-					"</td></tr>";
-			}
-
-			function checkZero(data) {
-				if (data.length == 1) {
-					data = "0" + data;
-				}
-				return data;
+				alert(
+					"Sono stati inviati correttamente " +
+						$("#name").val() +
+						$("#surname").val()
+				);
 			}
 
 			$("input").on("input", function () {
@@ -208,9 +119,6 @@
 
 			body {
 				font-family: "Exo", sans-serif;
-			}
-			tr:first-child {
-				font-weight: bold;
 			}
 
 			.context {
