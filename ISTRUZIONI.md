@@ -1,24 +1,21 @@
-# Istruzioni per l'esecuione
+# Istruzioni
 
 ### Ambienti di sviluppo:
 
-- Windows 10 x64 a 64 bit
-- Windows 11 x64 a 64 bit
+- Windows 10 x64
+- Windows 11 x64
 
-### Istruzioni di download
+Le seguenti istruzioni sono per qualsiasi sistema operativo.
 
-Per poter eseguire il codice, basti scaricare il `package` [qui](https://google.com) oppure clonare la repository con il comando `git clone`.
+### Linguaggio di programmazione
 
-### Istruzioni di esecuzione
+L'intero backend è scritto in Java, quindi nel caso non sia presente, [installarlo](https://www.oracle.com/java/technologies/downloads/).
+Il codice è stato testato con i `jdk 11` e `jdk 15.0.1`.
 
-Caricare il progetto in un IDEs di sviluppo come Eclipse, NetBeans o IntelliJ IDEA ed eseguire il main, contenuto in `Banca.java`
-oppure eseguire direttamente la classe `Banca.class` situata in `/target/classes/banca` con il comando
+### Istruzioni di esecuzione tramite IDE
 
-```
-javac Banca.class
-```
+Caricare il progetto in un IDE di sviluppo come [Eclipse](https://www.eclipse.org/downloads/), [NetBeans](https://netbeans.apache.org/download/index.html) o [IntelliJ IDEA](https://www.jetbrains.com/idea/) (Anche [VS Code](https://code.visualstudio.com/) con l'ausilio delle estensioni ufficiali `"Extension pack for java"` e `"Debugger for Java"`) ed eseguire il main, contenuto in `Banca.java`.
 
-### Ambienti testai per l'esecuzione
+### Verificare il funzionamento
 
-- Windows 10
-- Windows 11
+Per poter verificare che tutto funzioni correttamente, basti controllare la risposta di un qualsiasi endpoint (es. [http://localhost:8080/](http://localhost:8080/) nel caso di avvio sulla stessa macchina).

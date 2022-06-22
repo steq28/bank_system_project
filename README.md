@@ -3,7 +3,9 @@
 Michele Banfi 869294  
 Stefano Quaggio 866504
 
-Gli endpoint che il nostro server espone sono le seguenti:
+## Endpoint
+
+Gli endpoint che il nostro server espone sono i seguenti:
 
 - `/api/account`
 
@@ -25,3 +27,30 @@ Gli endpoint che il nostro server espone sono le seguenti:
 
 - `/api/divert`
   - POST
+
+Mentre il frontend web è esposto ai seguenti endpoint:
+
+- `/`
+- `/transfer`
+
+Espansioni frontend:
+
+- `/list`
+
+  Permette di listare tutti gli account registrati all'interno del sistema, appoggiandosi all'endpoint `/api/account` con richiesta `GET`
+
+- `/register`
+
+  Dà la possibilità di registrare un nuovo cliente tramite form, appoggiandosi all'endpoint `/api/account` con richiesta `POST`
+
+## Database
+
+Per il salvataggio dei dati, abbiamo optato per 2 file:
+
+- `accounts.json`
+
+In cui vengono salvate le info degli utenti registrati e le loro transazioni effettuate (come da richiesta)
+
+- `transazioni.json`
+
+In cui vengono salvate tutte le transazioni effettuate all'interno del sistema (per praticità di utilizzo all'interno di Java)

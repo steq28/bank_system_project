@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Exchanger;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -138,7 +139,7 @@ public class ManageBanca {
 
 	// Endpoint POST "/api/account"
 	@RequestMapping(value = "/api/account", method = RequestMethod.POST)
-	public void createAccount(@RequestBody String bodyRaw) {
+	public ResponseEntity createAccount(@RequestBody String bodyRaw) {
 		boolean found = true;
 		String uniqueID;
 		do {
@@ -155,10 +156,17 @@ public class ManageBanca {
 		} while (found);
 
 		Map<String, String> body = parseBody(bodyRaw);
-		Account ac = new Account(body.get("name"), body.get("surname"), uniqueID);
+		Account ac;
+		try {
+			ac = new Account(body.get("name"), body.get("surname"), uniqueID);
+		} catch (Exception e) {
+			return new ResponseEntity<String>("Failed parsing data", HttpStatus.BAD_REQUEST);
+		}
 
 		Banca.accounts.add(ac);
 		Banca.reset();
+
+		return new ResponseEntity<String>("{accountId: \"" + uniqueID + "\"}", HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/api/account", method = RequestMethod.DELETE)
@@ -211,9 +219,14 @@ public class ManageBanca {
 	public ResponseEntity prelevaDeposita(@PathVariable String accountId,
 			@RequestBody String bodyRaw) {
 
-		Map<String, String> body = parseBody(bodyRaw);
+		double amount;
+		try {
+			Map<String, String> body = parseBody(bodyRaw);
 
-		double amount = Double.parseDouble((body.get("amount")));
+			amount = Double.parseDouble((body.get("amount")));
+		} catch (Exception e) {
+			return new ResponseEntity<String>("Failed parsing data", HttpStatus.BAD_REQUEST);
+		}
 
 		Account accountTrovato = null;
 		for (Account ac : Banca.accounts) {
@@ -241,6 +254,7 @@ public class ManageBanca {
 	// Endpoint PUT "/api/account/{accountId}"
 	@RequestMapping(value = "/api/account/{accountId}", method = RequestMethod.PUT)
 	public ResponseEntity<String> editAccount(@PathVariable String accountId, @RequestBody String bodyRaw) {
+
 		Map<String, String> body = parseBody(bodyRaw);
 		Account accountTrovato = null;
 
