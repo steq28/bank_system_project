@@ -268,6 +268,8 @@ public class ManageBanca {
 				} else {
 					saldo += amount;
 					accountTrovato.setSaldo(saldo);
+					accountTrovato.addTransazione(new Transazione(new Date(System.currentTimeMillis()), amount,
+							accountTrovato.getAccountId(), ""));
 					Banca.reset();
 					return new ResponseEntity<PrelievoDeposito>(new PrelievoDeposito(saldo), HttpStatus.OK);
 				}
