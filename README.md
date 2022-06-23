@@ -13,6 +13,8 @@ Gli endpoint che il nostro server espone sono i seguenti:
   - POST
   - DELETE
 
+    Le transazioni riguardanti gli account eliminati rimarranno comunque presenti in altri account
+
 - `/api/account/{accountId}`
 
   - GET

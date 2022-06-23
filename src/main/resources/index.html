@@ -138,7 +138,6 @@
             data.transazioni.forEach(myFunction);
           },
           error: function (data) {
-            console.log(data);
             $("#error-message").html(data.responseText);
             $("#accountId").addClass("is-invalid");
           },

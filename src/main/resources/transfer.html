@@ -102,20 +102,24 @@
         let err = false;
 
         const regex = new RegExp(/^[0-9A-F]{20}$/i);
-
-        $("input[type=text]").each(function (index) {
-          if (index != 2 && mittente.val() !== beneficiario.val()) {
-            if (!regex.test($(this).val())) {
-              $(this).addClass("is-invalid");
-              err = true;
+        if (mittente.val() !== beneficiario.val()) {
+          $("input[type=text]").each(function (index) {
+            if (index != 2) {
+              if (!regex.test($(this).val())) {
+                $(this).addClass("is-invalid");
+                err = true;
+              }
+            } else {
+              if ($(this).val() <= 0) {
+                $(this).addClass("is-invalid");
+                err = true;
+              }
             }
-          } else {
-            if ($(this).val() <= 0) {
-              $(this).addClass("is-invalid");
-              err = true;
-            }
-          }
-        });
+          });
+        } else {
+          err = true;
+          $("#error").html("Gli account devono essere diversi!");
+        }
 
         if (!err) {
           $.ajax({

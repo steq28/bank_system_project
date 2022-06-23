@@ -425,39 +425,44 @@ public class ManageBanca {
 				}
 
 				if (accountTrovato != null && account2 != null) {
-					double saldo = accountTrovato.getSaldo();
-					double saldo2 = account2.getSaldo();
-					if (amount < 0 || saldo < amount) {
-						// if the value is -1 its an error
-						return new ResponseEntity<String>("Saldo non sufficiente per effettuare la transazione!",
-								HttpStatus.NOT_ACCEPTABLE);
-					} else if (amount > 0) {
+					if (accountTrovato.getAccountId() != account2.getAccountId()) {
+						double saldo = accountTrovato.getSaldo();
+						double saldo2 = account2.getSaldo();
+						if (amount < 0 || saldo < amount) {
+							// if the value is -1 its an error
+							return new ResponseEntity<String>("Saldo non sufficiente per effettuare la transazione!",
+									HttpStatus.NOT_ACCEPTABLE);
+						} else if (amount > 0) {
 
-						Transazione t = new Transazione(new Date(System.currentTimeMillis()), amount,
-								accountTrovato.getAccountId(), account2.getAccountId());
+							Transazione t = new Transazione(new Date(System.currentTimeMillis()), amount,
+									accountTrovato.getAccountId(), account2.getAccountId());
 
-						accountTrovato.addTransazione(t);
-						account2.addTransazione(t);
-						Banca.transazioniTotali.add(t);
-						saldo -= amount;
-						saldo2 += amount;
+							accountTrovato.addTransazione(t);
+							account2.addTransazione(t);
+							Banca.transazioniTotali.add(t);
+							saldo -= amount;
+							saldo2 += amount;
 
-						accountTrovato.setSaldo(saldo);
-						account2.setSaldo(saldo2);
-						Banca.reset();
-						// TODO sistemare in base al file
-						return new ResponseEntity<String>(
-								"{\"transactionId\": \"" + t.getIdentificativo()
-										+ "\", \"accountInfo\": [{\"accountId\": \"" + accountTrovato.getAccountId()
-										+ "\", \"saldo\":\""
-										+ saldo + "\"},{\"accountId\": \"" + account2.getAccountId()
-										+ "\", \"saldo\":\"" + saldo2 + "\"}]}",
-								HttpStatus.OK);
+							accountTrovato.setSaldo(saldo);
+							account2.setSaldo(saldo2);
+							Banca.reset();
+							return new ResponseEntity<String>(
+									"{\"transactionId\": \"" + t.getIdentificativo()
+											+ "\", \"accountInfo\": [{\"accountId\": \"" + accountTrovato.getAccountId()
+											+ "\", \"saldo\":\""
+											+ saldo + "\"},{\"accountId\": \"" + account2.getAccountId()
+											+ "\", \"saldo\":\"" + saldo2 + "\"}]}",
+									HttpStatus.OK);
+						} else {
+							return new ResponseEntity<String>("Importo deve essere > 0", HttpStatus.NOT_ACCEPTABLE);
+						}
 					} else {
-						return new ResponseEntity<String>("Importo deve essere > 0", HttpStatus.NOT_ACCEPTABLE);
+						return new ResponseEntity<String>("Gli account non devono essere uguali!",
+								HttpStatus.NOT_ACCEPTABLE);
 					}
 				} else {
-					return new ResponseEntity<String>("Account non trovato!", HttpStatus.NOT_ACCEPTABLE);
+					return new ResponseEntity<String>("Account non trovato!",
+							HttpStatus.NOT_ACCEPTABLE);
 				}
 			} else {
 				return new ResponseEntity<String>("AccountId in formato sbagliato", HttpStatus.BAD_REQUEST);

@@ -26,11 +26,6 @@ public class Banca {
 
 	public static void reset() {
 		try {
-			// TODO: controllare questo punto
-
-			// gson.toJson(accounts, new FileWriter("src/main/resources/db/accounts.json"));
-			// gson.toJson(transazioniTotali, new
-			// FileWriter("src/main/resources/db/transazioni.json"));
 			String jsonAccounts = gson.toJson(accounts), jsonTransazioni = gson.toJson(transazioniTotali);
 			BufferedWriter writer = new BufferedWriter(new FileWriter("src/main/resources/db/accounts.json"));
 			writer.write(jsonAccounts);
@@ -48,7 +43,6 @@ public class Banca {
 			System.out.println("Error during IO writing");
 			e.printStackTrace();
 		}
-		// getDbValue();
 	}
 
 	public static void getDbValue() {
@@ -65,10 +59,8 @@ public class Banca {
 
 			if (accounts == null)
 				accounts = new ArrayList<Account>();
-			// System.out.println(transazioniTotali);
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			System.out.println("Error during DB loading");
 			e.printStackTrace();
 		}

@@ -2,10 +2,10 @@
 
 ### Ambienti di sviluppo:
 
+Il programma è stato testato sui seguenti sistemi operativi:
+
 - Windows 10 x64
 - Windows 11 x64
-
-Le seguenti istruzioni sono per qualsiasi sistema operativo.
 
 ### Linguaggio di programmazione
 
