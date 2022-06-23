@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 
-import org.springframework.boot.ExitCodeEvent;
 import org.springframework.http.HttpHeaders;
 import java.nio.file.Paths;
 import java.util.Date;
@@ -15,7 +14,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.Exchanger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -144,76 +144,94 @@ public class ManageBanca {
 	public ResponseEntity createAccount(@RequestBody String bodyRaw) {
 		boolean found = true;
 		String uniqueID;
-		do {
-			uniqueID = UUID.randomUUID().toString();
-
-			uniqueID = uniqueID.replace("-", "");
-			uniqueID = uniqueID.substring(0, 20);
-
-			String app = uniqueID;
-
-			found = Banca.accounts.stream()
-					.anyMatch(p -> p.getAccountId().equals(app));
-
-		} while (found);
 
 		Map<String, String> body = parseBody(bodyRaw);
 		Account ac;
-		try {
-			ac = new Account(body.get("name"), body.get("surname"), uniqueID);
-		} catch (Exception e) {
-			return new ResponseEntity<String>("Failed parsing data", HttpStatus.BAD_REQUEST);
+
+		if (body.get("name") != null && body.get("surname") != null) {
+			do {
+				uniqueID = UUID.randomUUID().toString();
+
+				uniqueID = uniqueID.replace("-", "");
+				uniqueID = uniqueID.substring(0, 20);
+
+				String app = uniqueID;
+
+				found = Banca.accounts.stream()
+						.anyMatch(p -> p.getAccountId().equals(app));
+
+			} while (found);
+
+			try {
+				ac = new Account(body.get("name"), body.get("surname"), uniqueID);
+			} catch (Exception e) {
+				return new ResponseEntity<String>("Failed parsing data!", HttpStatus.BAD_REQUEST);
+			}
+
+			Banca.accounts.add(ac);
+			Banca.reset();
+
+			return new ResponseEntity<String>("{accountId: \"" + uniqueID + "\"}", HttpStatus.OK);
+		} else {
+			return new ResponseEntity<String>("Name e/o surname non presente!", HttpStatus.BAD_REQUEST);
 		}
-
-		Banca.accounts.add(ac);
-		Banca.reset();
-
-		return new ResponseEntity<String>("{accountId: \"" + uniqueID + "\"}", HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/api/account", method = RequestMethod.DELETE)
 	public ResponseEntity removeAccount(@RequestParam("id") String accountId) {
 		Account removeThis = null;
-
-		for (Account ac : Banca.accounts) {
-			if (ac.getAccountId().equals(accountId)) {
-				removeThis = ac;
-				break;
+		Pattern p = Pattern.compile("^[0-9A-F]{20}$", Pattern.CASE_INSENSITIVE);
+		Matcher m = p.matcher(accountId);
+		if (m.matches()) {
+			for (Account ac : Banca.accounts) {
+				if (ac.getAccountId().equals(accountId)) {
+					removeThis = ac;
+					break;
+				}
 			}
-		}
 
-		if (removeThis != null) {
-			if (Banca.accounts.remove(removeThis)) {
-				Banca.reset();
-				return new ResponseEntity<String>("OK", HttpStatus.OK);
+			if (removeThis != null) {
+				if (Banca.accounts.remove(removeThis)) {
+					Banca.reset();
+					return new ResponseEntity<String>("OK", HttpStatus.OK);
+				} else
+					return new ResponseEntity<String>("Failed to remove", HttpStatus.BAD_REQUEST);
 			} else
-				return new ResponseEntity<String>("Failed to remove", HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<String>("Account non trovato!", HttpStatus.NOT_FOUND);
 		} else
-			return new ResponseEntity<String>("Account non trovato!", HttpStatus.NOT_FOUND);
+			return new ResponseEntity<String>("Failed parsing data", HttpStatus.BAD_REQUEST);
+
 	}
 
 	// Endpoint GET "/api/account/{accountId}"
 	@RequestMapping(value = "/api/account/{accountId}", method = RequestMethod.GET)
 	public ResponseEntity getAccountDetails(@PathVariable String accountId) {
 		Account accountTrovato = null;
-		for (Account ac : Banca.accounts) {
-			if (ac.getAccountId().equals(accountId)) {
-				accountTrovato = ac;
-				break;
+
+		Pattern p = Pattern.compile("^[0-9A-F]{20}$", Pattern.CASE_INSENSITIVE);
+		Matcher m = p.matcher(accountId);
+		if (m.matches()) {
+
+			for (Account ac : Banca.accounts) {
+				if (ac.getAccountId().equals(accountId)) {
+					accountTrovato = ac;
+					break;
+				}
 			}
-		}
 
-		if (accountTrovato != null) {
-			Proprietario proprietario = new Proprietario(accountTrovato.getName(), accountTrovato.getSurname(),
-					accountTrovato.getSaldo(), accountTrovato.getTransazioni());
+			if (accountTrovato != null) {
+				Proprietario proprietario = new Proprietario(accountTrovato.getName(), accountTrovato.getSurname(),
+						accountTrovato.getSaldo(), accountTrovato.getTransazioni());
 
-			HttpHeaders responseHeaders = new HttpHeaders();
-			responseHeaders.set("X-Sistema-Bancario", accountTrovato.getName() + ";" + accountTrovato.getSurname());
-			return new ResponseEntity<Proprietario>(proprietario, responseHeaders, HttpStatus.OK);
+				HttpHeaders responseHeaders = new HttpHeaders();
+				responseHeaders.set("X-Sistema-Bancario", accountTrovato.getName() + ";" + accountTrovato.getSurname());
+				return new ResponseEntity<Proprietario>(proprietario, responseHeaders, HttpStatus.OK);
 
-		} else {
-			return new ResponseEntity<String>("Account non trovato!", HttpStatus.NOT_FOUND);
-		}
+			} else {
+				return new ResponseEntity<String>("Account non trovato!", HttpStatus.NOT_FOUND);
+			}
+		} else
+			return new ResponseEntity<String>("AccountId in formato sbagliato", HttpStatus.BAD_REQUEST);
 	}
 
 	// Endpoint POST "/api/account/{accountId}" for Prelevare/Depositare
@@ -221,36 +239,42 @@ public class ManageBanca {
 	public ResponseEntity prelevaDeposita(@PathVariable String accountId,
 			@RequestBody String bodyRaw) {
 
-		double amount;
-		try {
-			Map<String, String> body = parseBody(bodyRaw);
+		Pattern p = Pattern.compile("^[0-9A-F]{20}$", Pattern.CASE_INSENSITIVE);
+		Matcher m = p.matcher(accountId);
+		if (m.matches()) {
 
-			amount = Double.parseDouble((body.get("amount")));
-		} catch (Exception e) {
-			return new ResponseEntity<String>("Failed parsing data", HttpStatus.BAD_REQUEST);
-		}
+			double amount;
+			try {
+				Map<String, String> body = parseBody(bodyRaw);
 
-		Account accountTrovato = null;
-		for (Account ac : Banca.accounts) {
-			if (ac.getAccountId().equals(accountId)) {
-				accountTrovato = ac;
-				break;
+				amount = Double.parseDouble((body.get("amount")));
+			} catch (Exception e) {
+				return new ResponseEntity<String>("Failed parsing data", HttpStatus.BAD_REQUEST);
 			}
-		}
 
-		if (accountTrovato != null) {
-			double saldo = accountTrovato.getSaldo();
-			if (amount < 0 && saldo < (-1 * amount)) {
-				return new ResponseEntity<String>("Saldo non sufficiente!", HttpStatus.NOT_ACCEPTABLE);
+			Account accountTrovato = null;
+			for (Account ac : Banca.accounts) {
+				if (ac.getAccountId().equals(accountId)) {
+					accountTrovato = ac;
+					break;
+				}
+			}
+
+			if (accountTrovato != null) {
+				double saldo = accountTrovato.getSaldo();
+				if (amount < 0 && saldo < (-1 * amount)) {
+					return new ResponseEntity<String>("Saldo non sufficiente!", HttpStatus.NOT_ACCEPTABLE);
+				} else {
+					saldo += amount;
+					accountTrovato.setSaldo(saldo);
+					Banca.reset();
+					return new ResponseEntity<PrelievoDeposito>(new PrelievoDeposito(saldo), HttpStatus.OK);
+				}
 			} else {
-				saldo += amount;
-				accountTrovato.setSaldo(saldo);
-				Banca.reset();
-				return new ResponseEntity<PrelievoDeposito>(new PrelievoDeposito(saldo), HttpStatus.OK);
+				return new ResponseEntity<String>("Account non trovato!", HttpStatus.NOT_FOUND);
 			}
-		} else {
-			return new ResponseEntity<String>("Account non trovato!", HttpStatus.NOT_FOUND);
-		}
+		} else
+			return new ResponseEntity<String>("AccountId in formato sbagliato", HttpStatus.BAD_REQUEST);
 	}
 
 	// Endpoint PUT "/api/account/{accountId}"
@@ -260,21 +284,31 @@ public class ManageBanca {
 		Map<String, String> body = parseBody(bodyRaw);
 		Account accountTrovato = null;
 
-		for (Account ac : Banca.accounts) {
-			if (ac.getAccountId().equals(accountId)) {
-				accountTrovato = ac;
-				break;
-			}
-		}
+		Pattern p = Pattern.compile("^[0-9A-F]{20}$", Pattern.CASE_INSENSITIVE);
+		Matcher m = p.matcher(accountId);
+		if (m.matches()) {
 
-		if (accountTrovato != null && body.containsKey("name") && body.containsKey("surname")) {
-			accountTrovato.setName(body.get("name"));
-			accountTrovato.setSurname(body.get("surname"));
-			Banca.reset();
-			return new ResponseEntity<String>("OK!", HttpStatus.OK);
-		} else {
-			return new ResponseEntity<String>("Fail!", HttpStatus.BAD_REQUEST);
-		}
+			for (Account ac : Banca.accounts) {
+				if (ac.getAccountId().equals(accountId)) {
+					accountTrovato = ac;
+					break;
+				}
+			}
+
+			if (accountTrovato != null && body.containsKey("name") && body.containsKey("surname")) {
+				if (body.get("name") != "" && body.get("surname") != "") {
+					accountTrovato.setName(body.get("name"));
+					accountTrovato.setSurname(body.get("surname"));
+					Banca.reset();
+					return new ResponseEntity<String>("OK!", HttpStatus.OK);
+				} else {
+					return new ResponseEntity<String>("Fail!", HttpStatus.BAD_REQUEST);
+				}
+			} else {
+				return new ResponseEntity<String>("Fail!", HttpStatus.BAD_REQUEST);
+			}
+		} else
+			return new ResponseEntity<String>("AccountId in formato sbagliato", HttpStatus.BAD_REQUEST);
 	}
 
 	// Endpoint PATCH "/api/account/{accountId}"
@@ -283,33 +317,39 @@ public class ManageBanca {
 		Map<String, String> body = parseBody(bodyRaw);
 		Account accountTrovato = null;
 
-		for (Account ac : Banca.accounts) {
-			if (ac.getAccountId().equals(accountId)) {
-				accountTrovato = ac;
-				break;
-			}
-		}
+		Pattern p = Pattern.compile("^[0-9A-F]{20}$", Pattern.CASE_INSENSITIVE);
+		Matcher m = p.matcher(accountId);
+		if (m.matches()) {
 
-		if (accountTrovato != null) {
-			if (body.size() == 1) {
-				if (body.containsKey("name")) {
-					accountTrovato.setName(body.get("name"));
-					Banca.reset();
-					return new ResponseEntity<String>("OK!", HttpStatus.OK);
-				} else {
-					if (body.containsKey("surname")) {
-						accountTrovato.setSurname(body.get("surname"));
+			for (Account ac : Banca.accounts) {
+				if (ac.getAccountId().equals(accountId)) {
+					accountTrovato = ac;
+					break;
+				}
+			}
+
+			if (accountTrovato != null) {
+				if (body.size() == 1) {
+					if (body.containsKey("name")) {
+						accountTrovato.setName(body.get("name"));
 						Banca.reset();
 						return new ResponseEntity<String>("OK!", HttpStatus.OK);
-					} else
-						return new ResponseEntity<String>("Chiave errata!", HttpStatus.NOT_ACCEPTABLE);
+					} else {
+						if (body.containsKey("surname")) {
+							accountTrovato.setSurname(body.get("surname"));
+							Banca.reset();
+							return new ResponseEntity<String>("OK!", HttpStatus.OK);
+						} else
+							return new ResponseEntity<String>("Chiave errata!", HttpStatus.NOT_ACCEPTABLE);
+					}
+				} else {
+					return new ResponseEntity<String>("Errore numero chiavi!", HttpStatus.BAD_REQUEST);
 				}
 			} else {
-				return new ResponseEntity<String>("Errore numero chiavi!", HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<String>("Account non trovato!", HttpStatus.NOT_FOUND);
 			}
-		} else {
-			return new ResponseEntity<String>("Account non trovato!", HttpStatus.NOT_FOUND);
-		}
+		} else
+			return new ResponseEntity<String>("AccountId in formato sbagliato", HttpStatus.BAD_REQUEST);
 	}
 
 	// Endpoint HEAD "/api/account/{accountId}"
@@ -319,21 +359,27 @@ public class ManageBanca {
 		Map<String, String> body = parseBody(bodyRaw);
 		Account accountTrovato = null;
 
-		for (Account ac : Banca.accounts) {
-			if (ac.getAccountId().equals(accountId)) {
-				accountTrovato = ac;
-				break;
+		Pattern p = Pattern.compile("^[0-9A-F]{20}$", Pattern.CASE_INSENSITIVE);
+		Matcher m = p.matcher(accountId);
+		if (m.matches()) {
+
+			for (Account ac : Banca.accounts) {
+				if (ac.getAccountId().equals(accountId)) {
+					accountTrovato = ac;
+					break;
+				}
 			}
-		}
 
-		if (accountTrovato != null) {
+			if (accountTrovato != null) {
 
-			responseHeaders.set("X-Sistema-Bancario",
-					accountTrovato.getName() + ";" + accountTrovato.getSurname());
-			return new ResponseEntity<Void>(responseHeaders, HttpStatus.OK);
-		} else {
-			return new ResponseEntity<Void>(HttpStatus.NOT_FOUND);
-		}
+				responseHeaders.set("X-Sistema-Bancario",
+						accountTrovato.getName() + ";" + accountTrovato.getSurname());
+				return new ResponseEntity<Void>(responseHeaders, HttpStatus.OK);
+			} else {
+				return new ResponseEntity<Void>(HttpStatus.NOT_FOUND);
+			}
+		} else
+			return new ResponseEntity<String>("AccountId in formato sbagliato", HttpStatus.BAD_REQUEST);
 	}
 
 	// Endpoint POST "/api/transfer" for transfer money
@@ -354,50 +400,62 @@ public class ManageBanca {
 		} catch (Exception e) {
 			return new ResponseEntity<String>("Failed parsing data", HttpStatus.BAD_REQUEST);
 		}
-		Account accountTrovato = null;
-		for (Account ac : Banca.accounts) {
-			if (ac.getAccountId().equals(from)) {
-				accountTrovato = ac;
-				break;
-			}
-		}
+		if (from != "" && to != "") {
+			Pattern p = Pattern.compile("^[0-9A-F]{20}$", Pattern.CASE_INSENSITIVE);
+			Matcher mfrom = p.matcher(from);
+			Matcher mto = p.matcher(to);
 
-		Account account2 = null;
-		for (Account ac : Banca.accounts) {
-			if (ac.getAccountId().equals(to)) {
-				account2 = ac;
-				break;
-			}
-		}
+			if (mfrom.matches() && mto.matches()) {
+				Account accountTrovato = null;
+				for (Account ac : Banca.accounts) {
+					if (ac.getAccountId().equals(from)) {
+						accountTrovato = ac;
+						break;
+					}
+				}
 
-		if (accountTrovato != null && account2 != null) {
-			double saldo = accountTrovato.getSaldo();
-			double saldo2 = account2.getSaldo();
-			if (amount < 0 || saldo < amount) {
-				// if the value is -1 its an error
-				return new ResponseEntity<String>("Saldo non sufficiente per effettuare la transazione!",
-						HttpStatus.NOT_ACCEPTABLE);
-			} else if (amount > 0) {
+				Account account2 = null;
+				for (Account ac : Banca.accounts) {
+					if (ac.getAccountId().equals(to)) {
+						account2 = ac;
+						break;
+					}
+				}
 
-				Transazione t = new Transazione(new Date(System.currentTimeMillis()), amount,
-						accountTrovato.getAccountId(), account2.getAccountId());
+				if (accountTrovato != null && account2 != null) {
+					double saldo = accountTrovato.getSaldo();
+					double saldo2 = account2.getSaldo();
+					if (amount < 0 || saldo < amount) {
+						// if the value is -1 its an error
+						return new ResponseEntity<String>("Saldo non sufficiente per effettuare la transazione!",
+								HttpStatus.NOT_ACCEPTABLE);
+					} else if (amount > 0) {
 
-				accountTrovato.addTransazione(t);
-				account2.addTransazione(t);
-				Banca.transazioniTotali.add(t);
+						Transazione t = new Transazione(new Date(System.currentTimeMillis()), amount,
+								accountTrovato.getAccountId(), account2.getAccountId());
 
-				saldo -= amount;
-				saldo2 += amount;
-				accountTrovato.setSaldo(saldo);
-				account2.setSaldo(saldo2);
-				Banca.reset();
-				// TODO sistemare in base al file
-				return new ResponseEntity<PrelievoDeposito>(new PrelievoDeposito(saldo), HttpStatus.OK);
+						accountTrovato.addTransazione(t);
+						account2.addTransazione(t);
+						Banca.transazioniTotali.add(t);
+						saldo -= amount;
+						saldo2 += amount;
+
+						accountTrovato.setSaldo(saldo);
+						account2.setSaldo(saldo2);
+						Banca.reset();
+						// TODO sistemare in base al file
+						return new ResponseEntity<PrelievoDeposito>(new PrelievoDeposito(saldo), HttpStatus.OK);
+					} else {
+						return new ResponseEntity<String>("Importo deve essere > 0", HttpStatus.NOT_ACCEPTABLE);
+					}
+				} else {
+					return new ResponseEntity<String>("Account non trovato!", HttpStatus.NOT_ACCEPTABLE);
+				}
 			} else {
-				return new ResponseEntity<String>("Importo deve essere > 0", HttpStatus.NOT_ACCEPTABLE);
+				return new ResponseEntity<String>("AccountId in formato sbagliato", HttpStatus.BAD_REQUEST);
 			}
 		} else {
-			return new ResponseEntity<String>("Account non trovato!", HttpStatus.NOT_ACCEPTABLE);
+			return new ResponseEntity<String>("Errore nella formattazione dei dati", HttpStatus.BAD_REQUEST);
 		}
 	}
 
@@ -413,6 +471,8 @@ public class ManageBanca {
 		} catch (Exception e) {
 			return new ResponseEntity<String>("Failed parsing data", HttpStatus.BAD_REQUEST);
 		}
+
+		System.out.println(id);
 
 		Transazione transazioneCanc = null;
 
