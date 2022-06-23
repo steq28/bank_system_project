@@ -478,8 +478,6 @@ public class ManageBanca {
 			return new ResponseEntity<String>("Failed parsing data", HttpStatus.BAD_REQUEST);
 		}
 
-		System.out.println(id);
-
 		Transazione transazioneCanc = null;
 
 		for (Transazione t : Banca.transazioniTotali) {
