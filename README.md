@@ -31,13 +31,16 @@ Gli endpoint che il nostro server espone sono i seguenti:
 Mentre il frontend web è esposto ai seguenti endpoint:
 
 - `/`
+
+  Permette di listare le transazioni dato un accountId appoggiandosi all'endpoint `/api/account/{accountId}` con richiesta `GET`, e permette inoltre di poterle annullare, appoggiandosi all'endpoint `/api/divert` con richiesta `POST`
+
 - `/transfer`
 
 Espansioni frontend:
 
 - `/list`
 
-  Permette di listare tutti gli account registrati all'interno del sistema, appoggiandosi all'endpoint `/api/account` con richiesta `GET`
+  Permette di listare tutti gli account registrati all'interno del sistema, appoggiandosi all'endpoint `/api/account` con richiesta `GET`. È anche possibile all'interno della pagina modificare nome e cognome del proprietario dell'account appoggiandosi all'endpoint `/api/account{accountId}` con richiesta `PUT`.
 
 - `/register`
 

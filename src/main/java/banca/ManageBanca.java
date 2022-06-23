@@ -177,6 +177,7 @@ public class ManageBanca {
 		}
 	}
 
+	// Endpoint DELETE "/api/account"
 	@RequestMapping(value = "/api/account", method = RequestMethod.DELETE)
 	public ResponseEntity removeAccount(@RequestParam("id") String accountId) {
 		Account removeThis = null;
@@ -356,7 +357,6 @@ public class ManageBanca {
 	@RequestMapping(value = "/api/account/{accountId}", method = RequestMethod.HEAD)
 	public ResponseEntity getNameAndSurname(@PathVariable String accountId, @RequestBody String bodyRaw) {
 		HttpHeaders responseHeaders = new HttpHeaders();
-		Map<String, String> body = parseBody(bodyRaw);
 		Account accountTrovato = null;
 
 		Pattern p = Pattern.compile("^[0-9A-F]{20}$", Pattern.CASE_INSENSITIVE);
@@ -444,7 +444,13 @@ public class ManageBanca {
 						account2.setSaldo(saldo2);
 						Banca.reset();
 						// TODO sistemare in base al file
-						return new ResponseEntity<PrelievoDeposito>(new PrelievoDeposito(saldo), HttpStatus.OK);
+						return new ResponseEntity<String>(
+								"{\"transactionId\": \"" + t.getIdentificativo()
+										+ "\", \"accountInfo\": [{\"accountId\": \"" + accountTrovato.getAccountId()
+										+ "\", \"saldo\":\""
+										+ saldo + "\"},{\"accountId\": \"" + account2.getAccountId()
+										+ "\", \"saldo\":\"" + saldo2 + "\"}]}",
+								HttpStatus.OK);
 					} else {
 						return new ResponseEntity<String>("Importo deve essere > 0", HttpStatus.NOT_ACCEPTABLE);
 					}
