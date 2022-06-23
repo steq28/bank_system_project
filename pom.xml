@@ -10,8 +10,8 @@
 	<groupId>banca</groupId>
 	<artifactId>bank_system_project</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>esrest</name>
-	<description>Banca go br br</description>
+	<name>Banca</name>
+	<description>Banca</description>
 
 	<properties>
 		<java.version>11</java.version>
