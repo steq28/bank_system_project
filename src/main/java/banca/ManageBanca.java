@@ -6,6 +6,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+
+import org.springframework.boot.ExitCodeEvent;
 import org.springframework.http.HttpHeaders;
 import java.nio.file.Paths;
 import java.util.Date;
@@ -337,12 +339,21 @@ public class ManageBanca {
 	// Endpoint POST "/api/transfer" for transfer money
 	@RequestMapping(value = "/api/transfer", method = RequestMethod.POST)
 	public ResponseEntity tranfer(@RequestBody String bodyRaw) {
-		Map<String, String> body = parseBody(bodyRaw);
 
-		double amount = Double.parseDouble((body.get("amount")));
-		String from = body.get("from");
-		String to = body.get("to");
+		double amount;
+		String from;
+		String to;
 
+		try {
+			Map<String, String> body = parseBody(bodyRaw);
+
+			amount = Double.parseDouble((body.get("amount")));
+			from = body.get("from");
+			to = body.get("to");
+
+		} catch (Exception e) {
+			return new ResponseEntity<String>("Failed parsing data", HttpStatus.BAD_REQUEST);
+		}
 		Account accountTrovato = null;
 		for (Account ac : Banca.accounts) {
 			if (ac.getAccountId().equals(from)) {
@@ -394,9 +405,15 @@ public class ManageBanca {
 	@RequestMapping(value = "/api/divert", method = RequestMethod.POST)
 	public ResponseEntity<String> annullaTransazione(@RequestBody String bodyRaw) {
 
-		Map<String, String> body = parseBody(bodyRaw);
+		String id;
+		try {
+			Map<String, String> body = parseBody(bodyRaw);
 
-		String id = body.get("id");
+			id = body.get("id");
+		} catch (Exception e) {
+			return new ResponseEntity<String>("Failed parsing data", HttpStatus.BAD_REQUEST);
+		}
+
 		Transazione transazioneCanc = null;
 
 		for (Transazione t : Banca.transazioniTotali) {
